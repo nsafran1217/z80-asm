@@ -71,6 +71,8 @@ MainMenu:
         JP Z,WriteHexData
         CP 's'
         JP Z,StartExecuteAddr   ;specify address to execute from
+        CP 'D'
+        JP Z,DisableRom         ;go to disable rom subroutine
         JP MainMenu             ;If none match, reprint the message
 WriteHexData:
         JP MainMenu             ;Not implemented
@@ -113,7 +115,14 @@ StartExecuteAddr:
         CALL AskForAddress      ;Get addr from user
         CALL NewLine
         JP (HL)                 ;And start exectuon there
-                       
+
+DisableRom:
+        PUSH BC
+        LD C,$70                ;Load disable rom address
+        LD B,$01                ;Load disable rom bit
+        OUT (C),B               ;send bit
+        POP BC
+        JP MainMenu       
 
 ;;Asks user to input hex address, stores in HL Destorys all registers
 AskForAddress:
@@ -304,7 +313,7 @@ LoopIn:
 	RET
 
 splashScreen: .asciiz "\r\n\r\nWelcome to Z80 ROM MONITOR\r\n (c)Nathan Safran 2021\r\n\r\n\r\n"
-initMessage: .asciiz "\r\nEnter l to load data into RAM\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nPress e to jump execution to $4000\r\nEnter s to jump execution to specified address\r\n:"
+initMessage: .asciiz "\r\nEnter l to load data into RAM\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nPress e to jump execution to $4000\r\nEnter s to jump execution to specified address\r\nEnter D to disable ROM\r\n:"
 loadMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000\r\nYou may have to send 1 more byte after loading\r\nReady to load:\r\n"   ;needs the -esc option to treat these as cr and lf
 ;;initMessage: .asciiz "test"
 dataLoadedMessage: .asciiz "\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\nData has been loaded into RAM\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"

@@ -20,7 +20,7 @@ TFCB	.EQU	5CH		;default file control block.
 TBUFF	.EQU	80H		;i/o buffer and command line storage.
 TBASE	.EQU	100H		;transiant program storage area.
 ;
-;   Set control character equates.
+;   Set control character .EQUates.
 ;
 CNTRLC	.EQU	3		;control-c
 CNTRLE	.EQU	05H		;control-e
@@ -165,7 +165,7 @@ ENTRY2:	CALL	ENTRY
 	OR	A		;set zero flag if appropriate.
 	RET	
 ;
-;   Routine to read the next record from a sequential file.
+;   Routine to read the next record from a s.EQUential file.
 ; (DE) points to the FCB.
 ;
 RDREC:	LD	C,20
@@ -176,7 +176,7 @@ RDREC:	LD	C,20
 READFCB:LD	DE,FCB
 	JP	RDREC
 ;
-;   Routine to write the next record of a sequential file.
+;   Routine to write the next record of a s.EQUential file.
 ; (DE) points to the FCB.
 ;
 WRTREC:	LD	C,21
@@ -246,7 +246,7 @@ GETINP:	LD	A,(BATCH)	;if =0, then use console input.
 	LD	A,(CDRIVE)	;select drive 0 if need be.
 	OR	A
 	LD	A,0		;always use drive A for submit.
-	CALL	NZ,DSKSEL	;select it if required.
+	CALL	NZ,DSKSEL	;select it if r.EQUired.
 	LD	DE,BATCHFCB
 	CALL	OPEN		;look for it.
 	JP	Z,GETINP1	;if not there, use normal input.
@@ -439,7 +439,7 @@ ADDHL:	ADD	A,L
 CONVFST:LD	A,0
 ;
 ;   Format a file name (convert * to '?', etc.). On return,
-; (A)=0 is an unambigeous name was specified. Enter with (A) equal to
+; (A)=0 is an unambigeous name was specified. Enter with (A) .EQUal to
 ; the position within the fcb for the name (either 0 or 16).
 ;
 CONVERT:LD	HL,FCB
@@ -605,7 +605,7 @@ CLEARBUF: XOR	A
 ;**************************************************************
 ;*
 COMMAND:LD	SP,CCPSTACK	;setup stack area.
-	PUSH	BC		;note that (C) should be equal to:
+	PUSH	BC		;note that (C) should be .EQUal to:
 	LD	A,C		;(uuuudddd) where 'uuuu' is the user number
 	RRA			;and 'dddd' is the drive number.
 	RRA	
@@ -682,7 +682,7 @@ RDERROR:LD	BC,RDERR
 	JP	PLINE
 RDERR:	DEFB	'Read error',0
 ;
-;   Required file was not located.
+;   R.EQUired file was not located.
 ;
 NONE:	LD	BC,NOFILE
 	JP	PLINE
@@ -1196,7 +1196,7 @@ COMFILE:DEFB	'COM'		;command file extension.
 ;
 GETBACK:CALL	RESETDR		;reset previous drive.
 GETBACK1: CALL	CONVFST		;convert first name in (FCB).
-	LD	A,(FCB+1)	;if this was just a drive change request,
+	LD	A,(FCB+1)	;if this was just a drive change r.EQUest,
 	SUB	' '		;make sure it was valid.
 	LD	HL,CHGDRV
 	OR	(HL)
@@ -1294,7 +1294,7 @@ FUNCTNS:DEFW	WBOOT,GETCON,OUTCON,GETRDR,PUNCH,LIST,DIRCIO,GETIOB
 ;
 ERROR1:	LD	HL,BADSEC	;bad sector message.
 	CALL	PRTERR		;print it and get a 1 char responce.
-	CP	CNTRLC		;re-boot request (control-c)?
+	CP	CNTRLC		;re-boot r.EQUest (control-c)?
 	JP	Z,0		;yes.
 	RET			;no, return to retry i/o function.
 ;
@@ -1436,7 +1436,7 @@ SHOWIT:	LD	A,C
 	LD	C,'^'		;for a control character, preceed it with '^'.
 	CALL	OUTCHAR
 	POP	AF
-	OR	'@'		;and then use the letter equivelant.
+	OR	'@'		;and then use the letter .EQUivelant.
 	LD	C,A
 ;
 ;   Function to output (C) to the console device and expand tabs
@@ -1608,7 +1608,7 @@ RDBUF15:PUSH	BC
 	CALL	SHOWIT
 	POP	HL
 	POP	BC
-	LD	A,(HL)		;was it an abort request?
+	LD	A,(HL)		;was it an abort r.EQUest?
 	CP	CNTRLC		;control-c abort?
 	LD	A,B
 	JP	NZ,RDBUF16
@@ -1632,8 +1632,8 @@ GETRDR:	CALL	READER		;get a character from reader, set status and return.
 	JP	SETSTAT
 ;
 ;  Function to perform direct console i/o. If (C) contains (FF)
-; then this is an input request. If (C) contains (FE) then
-; this is a status request. Otherwise we are to output (C).
+; then this is an input r.EQUest. If (C) contains (FE) then
+; this is a status r.EQUest. Otherwise we are to output (C).
 ;
 DIRCIO:	LD	A,C		;test for (FF).
 	INC	A
@@ -1641,7 +1641,7 @@ DIRCIO:	LD	A,C		;test for (FF).
 	INC	A		;test for (FE).
 	JP	Z,CONST
 	JP	CONOUT		;just output (C).
-DIRC1:	CALL	CONST		;this is an input request.
+DIRC1:	CALL	CONST		;this is an input r.EQUest.
 	OR	A
 	JP	Z,GOBACK1	;not ready? Just return (directly).
 	CALL	CONIN		;yes, get character.
@@ -2004,10 +2004,10 @@ STRDATA:CALL	SETHLDE
 ;
 ;   Set the next record to access. If (MODE) is set to 2, then
 ; the last record byte (SAVNREC) has the correct number to access.
-; For sequential access, (MODE) will be equal to 1.
+; For s.EQUential access, (MODE) will be .EQUal to 1.
 ;
 SETNREC:CALL	SETHLDE
-	LD	A,(MODE)	;get sequential flag (=1).
+	LD	A,(MODE)	;get s.EQUential flag (=1).
 	CP	2		;a 2 indicates that no adder is needed.
 	JP	NZ,STNREC1
 	XOR	A		;clear adder (random access?).
@@ -2085,7 +2085,7 @@ GETWPRT:LD	HL,(WRTPRT)	;get status bytes.
 ;   Function to write protect the current disk.
 ;
 WRTPRTD:LD	HL,WRTPRT	;point to status word.
-	LD	C,(HL)		;set (BC) equal to the status.
+	LD	C,(HL)		;set (BC) .EQUal to the status.
 	INC	HL
 	LD	B,(HL)
 	CALL	SETBIT		;and set this bit according to current drive.
@@ -2259,7 +2259,7 @@ MOVEDIR:LD	HL,(DIRBUF)	;buffer is located here, and
 	LD	C,128		;this is its length.
 	JP	DE2HL		;move it now and return.
 ;
-;   Check (FILEPOS) and set the zero flag if it equals 0ffffh.
+;   Check (FILEPOS) and set the zero flag if it .EQUals 0ffffh.
 ;
 CKFILPOS: LD	HL,FILEPOS
 	LD	A,(HL)
@@ -2278,7 +2278,7 @@ STFILPOS: LD	HL,0FFFFH
 ;   Move on to the next file position within the current
 ; directory buffer. If no more exist, set pointer to 0ffffh
 ; and the calling routine will check for this. Enter with (C)
-; equal to 0ffh to cause the checksum byte to be set, else we
+; .EQUal to 0ffh to cause the checksum byte to be set, else we
 ; will check this disk and set write protect if checksums are
 ; not the same (applies only if another directory sector must
 ; be read).
@@ -2353,7 +2353,7 @@ CKBMAP1:RLCA			;get correct bit into position 0.
 	RET	
 ;
 ;   Set or clear the bit map such that block number (BC) will be marked
-; as used. On entry, if (E)=0 then this bit will be cleared, if it equals
+; as used. On entry, if (E)=0 then this bit will be cleared, if it .EQUals
 ; 1 then it will be set (don't use anyother values).
 ;
 STBITMAP: PUSH	DE
@@ -2450,7 +2450,7 @@ BITMAP1:LD	(HL),0
 ;
 	CALL	HOMEDRV		;now home the drive.
 	LD	HL,(SCRATCH1)
-	LD	(HL),3		;force next directory request to read
+	LD	(HL),3		;force next directory r.EQUest to read
 	INC	HL		;in a sector.
 	LD	(HL),0
 	CALL	STFILPOS	;clear initial file position also.
@@ -2953,9 +2953,9 @@ GTNEXT4:CALL	STRDATA		;move in updated data (rec #, extent #, etc.)
 GTNEXT5:CALL	IOERR1		;set error code, clear bit 7 of 's2'
 	JP	SETS2B7		;so this is not written on a close.
 ;
-;   Read a sequential file.
+;   Read a s.EQUential file.
 ;
-RDSEQ:	LD	A,1		;set sequential access mode.
+RDSEQ:	LD	A,1		;set s.EQUential access mode.
 	LD	(MODE),A
 RDSEQ1:	LD	A,0FFH		;don't allow reading unwritten space.
 	LD	(RDWRTFLG),A
@@ -2984,9 +2984,9 @@ RDSEQ2:	CALL	COMBLK		;ok. compute block number to read.
 ;
 RDSEQ3:	JP	IOERR1
 ;
-;   Write the next sequential record.
+;   Write the next s.EQUential record.
 ;
-WTSEQ:	LD	A,1		;set sequential access mode.
+WTSEQ:	LD	A,1		;set s.EQUential access mode.
 	LD	(MODE),A
 WTSEQ1:	LD	A,0		;allow an addition empty extent to be opened.
 	LD	(RDWRTFLG),A
@@ -3042,7 +3042,7 @@ WTSEQ6:	LD	A,(STATUS)	;are we ok so far?
 	RET	NZ
 	PUSH	BC		;yes, save write flag for bios (register C).
 	CALL	LOGICAL		;convert (BLKNMBR) over to loical sectors.
-	LD	A,(MODE)	;get access mode flag (1=sequential,
+	LD	A,(MODE)	;get access mode flag (1=s.EQUential,
 	DEC	A		;0=random, 2=special?).
 	DEC	A
 	JP	NZ,WTSEQ9
@@ -3116,7 +3116,7 @@ WTSEQ10:NOP			;was 'dcr c'
 	POP	AF		;get record count for this extent.
 WTSEQ99:CP	127		;is it full?
 	JP	NZ,WTSEQ12
-	LD	A,(MODE)	;yes, are we in sequential mode?
+	LD	A,(MODE)	;yes, are we in s.EQUential mode?
 	CP	1
 	JP	NZ,WTSEQ12
 	CALL	SETNREC		;yes, set next record number.
@@ -3144,7 +3144,7 @@ WTSEQ12:JP	SETNREC		;set next record to access.
 ;
 ;   On entry, register (C) contains 0ffh if this is a read
 ; and thus we can not access unwritten disk space. Otherwise,
-; another extent will be opened (for writing) if required.
+; another extent will be opened (for writing) if r.EQUired.
 ;
 POSITION: XOR	A		;set random i/o flag.
 	LD	(MODE),A
@@ -3195,7 +3195,7 @@ POSITN1:PUSH	BC		;save read/write flag.
 	AND	7FH
 	JP	Z,POSITN3	;same, we are almost done then.
 ;
-;  Get here when another extent is required.
+;  Get here when another extent is r.EQUired.
 ;
 POSITN2:PUSH	BC
 	PUSH	DE
@@ -3353,7 +3353,7 @@ RANSIZ3:POP	HL		;we are done, restore the stack and
 	RET			;return.
 ;
 ;   Function to return the random record position of a given
-; file which has been read in sequential mode up to now.
+; file which has been read in s.EQUential mode up to now.
 ;
 SETRAN:	LD	HL,(PARAMS)	;point to fcb.
 	LD	DE,32		;and to last used record.
@@ -3485,13 +3485,13 @@ DELFILE:CALL	AUTOSEL		;select proper drive.
 	CALL	ERAFILE		;erase the file.
 	JP	STSTATUS	;set status and return.
 ;
-;   Function to execute a sequential read of the specified
+;   Function to execute a s.EQUential read of the specified
 ; record number.
 ;
 READSEQ:CALL	AUTOSEL		;select proper drive then read.
 	JP	RDSEQ
 ;
-;   Function to write the net sequential record.
+;   Function to write the net s.EQUential record.
 ;
 WRTSEQ:	CALL	AUTOSEL		;select proper drive then write.
 	JP	WTSEQ
@@ -3548,7 +3548,7 @@ GETPRM1:LD	(STATUS),HL
 	RET	
 ;
 ;   Function to get or set the user number. If (E) was (FF)
-; then this is a request to return the current user number.
+; then this is a r.EQUest to return the current user number.
 ; Else set the user number from (E).
 ;
 GETUSER:LD	A,(EPARAM)	;get parameter.
@@ -3682,7 +3682,7 @@ XLATE:	DEFW	0		;sector translation table address.
 CLOSEFLG: DEFB	0		;close flag (=0ffh is extent written ok).
 RDWRTFLG: DEFB	0		;read/write flag (0ffh=read, 0=write).
 FNDSTAT:DEFB	0		;filename found status (0=found first entry).
-MODE:	DEFB	0		;I/o mode select (0=random, 1=sequential, 2=special random).
+MODE:	DEFB	0		;I/o mode select (0=random, 1=s.EQUential, 2=special random).
 EPARAM:	DEFB	0		;storage for register (E) on entry to bdos.
 RELBLOCK: DEFB	0		;relative position within fcb of block number written.
 COUNTER:DEFB	0		;byte counter for directory name searches.

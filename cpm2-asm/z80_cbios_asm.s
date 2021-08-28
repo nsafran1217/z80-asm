@@ -1,14 +1,27 @@
+;Edit for my custom machine nsafran1217@gmail.com
+;I used the variabled in the IO seciont
+UART = $00
+UARTLSR = $05
+
+IDESTATUS = $47
+IDESECTORCOUNT = $42
+IDELBABITS0TO7 = $43
+IDELBABITS8TO15 = $44
+IDELBABITS15TO23 = $45
+IDEDRIVEHEADREG = $46
+IDEDATAREG = $40   
+
 ;	skeletal cbios for first level of CP/M 2.0 alteration
 ;
-ccp:	equ	0E400h		;base of ccp
-bdos:	equ	0EC06h		;bdos entry
-bios:	equ	0FA00h		;base of bios
-cdisk:	equ	0004h		;address of current disk number 0=a,... l5=p
-iobyte:	equ	0003h		;intel i/o byte
-disks:	equ	04h		;number of disks in the system
+ccp:	.equ	0E400h		;base of ccp
+bdos:	.equ	0EC06h		;bdos entry
+bios:	.equ	0FA00h		;base of bios
+cdisk:	.equ	0004h		;address of current disk number 0=a,... l5=p
+iobyte:	.equ	0003h		;intel i/o byte
+disks:	.equ	04h		;number of disks in the system
 ;
 	org	bios		;origin of this program
-nsects:	equ	($-ccp)/128	;warm start sector count
+nsects:	.equ	($-ccp)/128	;warm start sector count
 ;
 ;	jump vector for individual subroutines
 ;
@@ -56,23 +69,23 @@ dpbase:	defw	0000h, 0000h
 	defw	chk03, all03
 ;
 ;	sector translate vector
-trans:	defm	 1,  7, 13, 19	;sectors  1,  2,  3,  4
-	defm	25,  5, 11, 17	;sectors  5,  6,  7,  6
-	defm	23,  3,  9, 15	;sectors  9, 10, 11, 12
-	defm	21,  2,  8, 14	;sectors 13, 14, 15, 16
-	defm	20, 26,  6, 12	;sectors 17, 18, 19, 20
-	defm	18, 24,  4, 10	;sectors 21, 22, 23, 24
-	defm	16, 22		;sectors 25, 26
+trans:	defb	 1,  7, 13, 19	;sectors  1,  2,  3,  4
+	defb	25,  5, 11, 17	;sectors  5,  6,  7,  6
+	defb	23,  3,  9, 15	;sectors  9, 10, 11, 12
+	defb	21,  2,  8, 14	;sectors 13, 14, 15, 16
+	defb	20, 26,  6, 12	;sectors 17, 18, 19, 20
+	defb	18, 24,  4, 10	;sectors 21, 22, 23, 24
+	defb	16, 22		;sectors 25, 26
 ;
 dpblk:	;disk parameter block for all disks.
 	defw	26		;sectors per track
-	defm	3		;block shift factor
-	defm	7		;block mask
-	defm	0		;null mask
+	defb	3		;block shift factor
+	defb	7		;block mask
+	defb	0		;null mask
 	defw	242		;disk size-1
 	defw	63		;directory max
-	defm	192		;alloc 0
-	defm	0		;alloc 1
+	defb	192		;alloc 0
+	defb	0		;alloc 1
 	defw	0		;check size
 	defw	2		;track offset
 ;
@@ -167,31 +180,35 @@ diskok:	LD 	c, a		;send to the ccp
 ;	simple i/o handlers (must be filled in by user)
 ;	in each case, the entry point is provided, with space reserved
 ;	to insert your own code
-;
+;   ;Edit by nsafran1217 for 16c550 UART
 const:	;console status, return 0ffh if character ready, 00h if not
-	in 	a,(3)		;get status
-	and 	002h		;check RxRDY bit
+	in 	a,(UARTLSR)		    ;get status
+	and 	0b00000001		;check RxRDY bit
 	jp 	z,no_char
-	ld	a,0ffh		;char ready	
+	ld	a,0ffh		        ;char ready	
 	ret
-no_char:ld	a,00h		;no char
+no_char:
+	ld	a,00h		    	;no char
 	ret
 ;
 conin:	;console character into register a
-	in 	a,(3)		;get status
-	and 	002h		;check RxRDY bit
-	jp 	z,conin		;loop until char ready
-	in 	a,(2)		;get char
-	AND	7fh		;strip parity bit
-	ret
+	IN A,(UARTLSR)		    ; Read LSR
+	AND 0b00000001		    ; Check bit 0 (RHR byte ready)
+	JP Z,conin              ; If zero, keep waiting for data
+	IN A,(UART)	            ; Place ready character into A
+	NOP						;; to line up bios correctly??
+	NOP
+	RET
+
 ;
 conout:	;console character output from register c
-	in	a,(3)
-	and	001h		;check TxRDY bit
-	jp	z,conout	;loop until port ready
-	ld	a,c		;get the char
-	out	(2),a		;out to port
-	ret
+    ld a,c                  ; move c to a so we can output it
+    OUT (UART),A		    ; Send character to UART
+conoutloop:
+    IN A,(UARTLSR)          ; Read LSR
+    AND 0b01000000          ; Check bit 6 (THR empty, line idle)
+    JP Z,conoutloop
+    RET
 ;
 list:	;list character from register c
 	LD 	a, c	  	;character to register a
@@ -278,35 +295,35 @@ read:
 ;Dma address in 'dmaad' (0-65535)
 ;
 			ld	hl,hstbuf		;buffer to place disk sector (256 bytes)
-rd_status_loop_1:	in	a,(0fh)			;check status
+rd_status_loop_1:	in	a,(IDESTATUS)			;check status
 			and	80h			;check BSY bit
 			jp	nz,rd_status_loop_1	;loop until not busy
-rd_status_loop_2:	in	a,(0fh)			;check	status
+rd_status_loop_2:	in	a,(IDESTATUS)			;check	status
 			and	40h			;check DRDY bit
 			jp	z,rd_status_loop_2	;loop until ready
 			ld	a,01h			;number of sectors = 1
-			out	(0ah),a			;sector count register
+			out	(IDESECTORCOUNT),a			;sector count register
 			ld	a,(sector)		;sector
-			out	(0bh),a			;lba bits 0 - 7
+			out	(IDELBABITS0TO7),a			;lba bits 0 - 7
 			ld	a,(track)		;track
-			out	(0ch),a			;lba bits 8 - 15
+			out	(IDELBABITS8TO15),a			;lba bits 8 - 15
 			ld	a,(diskno)		;disk (only bits 
-			out	(0dh),a			;lba bits 16 - 23
+			out	(IDELBABITS15TO23),a			;lba bits 16 - 23
 			ld	a,11100000b		;LBA mode, select host drive 0
-			out	(0eh),a			;drive/head register
+			out	(IDEDRIVEHEADREG),a			;drive/head register
 			ld	a,20h			;Read sector command
-			out	(0fh),a
-rd_wait_for_DRQ_set:	in	a,(0fh)			;read status
+			out	(IDESTATUS),a
+rd_wait_for_DRQ_set:	in	a,(IDESTATUS)			;read status
 			and	08h			;DRQ bit
 			jp	z,rd_wait_for_DRQ_set	;loop until bit set
-rd_wait_for_BSY_clear:	in	a,(0fh)
+rd_wait_for_BSY_clear:	in	a,(IDESTATUS)
 			and	80h
 			jp	nz,rd_wait_for_BSY_clear
-			in	a,(0fh)			;clear INTRQ
-read_loop:		in	a,(08h)			;get data
+			in	a,(IDESTATUS)			;clear INTRQ
+read_loop:		in	a,(IDEDATAREG)			;get data
 			ld	(hl),a
 			inc	hl
-			in	a,(0fh)			;check status
+			in	a,(IDESTATUS)			;check status
 			and	08h			;DRQ bit
 			jp	nz,read_loop		;loop until clear
 			ld	hl,(dmaad)		;memory location to place data read from disk
@@ -317,7 +334,7 @@ rd_sector_loop:		ld	a,(de)			;get byte from host buffer
 			inc	hl
 			inc	de
 			djnz	rd_sector_loop		;put 128 bytes into memory
-			in	a,(0fh)			;get status
+			in	a,(IDESTATUS)			;get status
 			and	01h			;error bit
 			ret
 
@@ -337,37 +354,37 @@ wr_sector_loop:		ld	a,(hl)			;get byte from memory
 			inc	de
 			djnz	wr_sector_loop		;put 128 bytes in host buffer
 			ld	hl,hstbuf		;location of data to write to disk
-wr_status_loop_1:	in	a,(0fh)			;check status
+wr_status_loop_1:	in	a,(IDESTATUS)			;check status
 			and	80h			;check BSY bit
 			jp	nz,wr_status_loop_1	;loop until not busy
-wr_status_loop_2:	in	a,(0fh)			;check	status
+wr_status_loop_2:	in	a,(IDESTATUS)			;check	status
 			and	40h			;check DRDY bit
 			jp	z,wr_status_loop_2	;loop until ready
 			ld	a,01h			;number of sectors = 1
-			out	(0ah),a			;sector count register
+			out	(IDESECTORCOUNT),a			;sector count register
 			ld	a,(sector)
-			out	(0bh),a			;lba bits 0 - 7 = "sector"
+			out	(IDELBABITS0TO7),a			;lba bits 0 - 7 = "sector"
 			ld	a,(track)
-			out	(0ch),a			;lba bits 8 - 15 = "track"
+			out	(IDELBABITS8TO15),a			;lba bits 8 - 15 = "track"
 			ld	a,(diskno)
-			out	(0dh),a			;lba bits 16 - 23, use 16 to 20 for "disk"
+			out	(IDELBABITS15TO23),a			;lba bits 16 - 23, use 16 to 20 for "disk"
 			ld	a,11100000b		;LBA mode, select drive 0
-			out	(0eh),a			;drive/head register
+			out	(IDEDRIVEHEADREG),a			;drive/head register
 			ld	a,30h			;Write sector command
-			out	(0fh),a
-wr_wait_for_DRQ_set:	in	a,(0fh)			;read status
+			out	(IDESTATUS),a
+wr_wait_for_DRQ_set:	in	a,(IDESTATUS)			;read status
 			and	08h			;DRQ bit
 			jp	z,wr_wait_for_DRQ_set	;loop until bit set			
 write_loop:		ld	a,(hl)
-			out	(08h),a			;write data
+			out	(IDEDATAREG),a			;write data
 			inc	hl
-			in	a,(0fh)			;read status
+			in	a,(IDESTATUS)			;read status
 			and	08h			;check DRQ bit
 			jp	nz,write_loop		;write until bit cleared
-wr_wait_for_BSY_clear:	in	a,(0fh)
+wr_wait_for_BSY_clear:	in	a,(IDESTATUS)
 			and	80h
 			jp	nz,wr_wait_for_BSY_clear
-			in	a,(0fh)			;clear INTRQ
+			in	a,(IDESTATUS)			;clear INTRQ
 			and	01h			;check for error
 			ret
 ;
@@ -382,7 +399,7 @@ dmaad:	defs	2		;direct memory address
 diskno:	defs	1		;disk number 0-15
 ;
 ;	scratch ram area for bdos use
-begdat:	equ	$	 	;beginning of data area
+begdat:	.equ	$	 	;beginning of data area
 dirbf:	defs	128	 	;scratch directory area
 all00:	defs	31	 	;allocation vector 0
 all01:	defs	31	 	;allocation vector 1
@@ -393,7 +410,7 @@ chk01:	defs	16		;check vector 1
 chk02:	defs	16	 	;check vector 2
 chk03:	defs	16	 	;check vector 3
 ;
-enddat:	equ	$	 	;end of data area
-datsiz:	equ	$-begdat;	;size of data area
+enddat:	.equ	$	 	;end of data area
+datsiz:	.equ	$-begdat;	;size of data area
 hstbuf: ds	256		;buffer for host disk sector
 	end

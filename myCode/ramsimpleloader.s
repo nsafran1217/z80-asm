@@ -73,6 +73,8 @@ MainMenu:
         JP Z,StartExecuteAddr   ;specify address to execute from
         CP 'D'
         JP Z,DisableRom         ;go to disable rom subroutine
+        CP 'L'
+        JP Z,LoadDataToAddress
         JP MainMenu             ;If none match, reprint the message
 WriteHexData:
         JP MainMenu             ;Not implemented
@@ -83,23 +85,33 @@ ViewHexData:
         CALL AskForAddress      ;Get address from user
         CALL OutputHexData      ;output $80 data starting at HL
         JP MainMenu
-
+LoadDataToAddress:
+        CALL AskForAddress
+        PUSH HL
+        CALL AskForDataLen
+        LD D,H
+        LD E,L
+        POP HL
+        LD IY,beginLoadMessage       ;Load message address into index register IY
+        CALL PrintStr           ;Print the message
+        JP ReadDataLoop
+        
 StartReadingData:
         LD IY,loadMessage       ;Load message address into index register IY
         CALL PrintStr           ;Print the message
         LD HL,RAMSTART          ;Load starting ram address into HL
         LD DE,DATALEN           ;Load length of data into DE
-ReadLoop:			; Main read/write loop
+ReadDataLoop:			; Main read/write loop
 	CALL Input		; Read a byte from serial terminal
         ;CALL Output
         CALL StoreInRam
         DEC DE                  ;decrement bytes left to read
         LD A,D                  ;ld highbyte of DE into A
         CP $00                  ;check if zero
-	JP NZ, ReadLoop         ;if not keep looping
+	JP NZ, ReadDataLoop         ;if not keep looping
         LD A,E                  ;ld low byte of DE into A
         CP $00                  ;check if zero
-        JP NZ, ReadLoop         ;if not keep looping
+        JP NZ, ReadDataLoop         ;if not keep looping
         ;if it is, Go back to main menu and print Message
         LD IY,dataLoadedMessage
         CALL PrintStr
@@ -123,6 +135,13 @@ DisableRom:
         OUT (C),B               ;send bit
         POP BC
         JP MainMenu       
+;;Gets datalen in hex. stores value in HL
+AskForDataLen:
+        LD IY,WhatDataLenMessage   
+        CALL PrintStr 
+        LD D,$04                ;Get 4 charcters
+        LD HL,$0000
+        JP AskForHexLoop
 
 ;;Asks user to input hex address, stores in HL Destorys all registers
 AskForAddress:
@@ -130,7 +149,7 @@ AskForAddress:
         CALL PrintStr 
         LD D,$04                ;Get 4 charcters
         LD HL,$0000
-AskForAddressLoop:   
+AskForHexLoop:   
         CALL Input
         CALL OutputChar
         ;;LD A,B                ;;we now use A for input and output
@@ -139,7 +158,7 @@ AskForAddressLoop:
         DEC D                   ;Dec char counter
         LD A,D                  ;Move D to A
         CP $00                  ;Is 0?
-        JP NZ,AskForAddressLoop ;Keep going if we need more CHARS
+        JP NZ,AskForHexLoop ;Keep going if we need more CHARS
 
         POP AF                  ;get low nibble
         LD B,A                  ;put into B
@@ -283,44 +302,41 @@ ATOHEX:
 
 ;; Take a character in register A and output to the UART, toggling the GPIO LED
 OutputChar:
-        PUSH BC                 ; PUSH BC to stack
-        LD B,A                  ;Move char into B
+
         PUSH AF                 ;store A safely
         IN A,($04)              ; Toggle OUT1 GPIO LED
         XOR %00000100
         OUT ($04), A
-        LD C,UART               ; Write output UART port to reg C for use later
-        OUT (C),B		; Send character to UART
+        POP AF
+        OUT (UART),A		; Send character to UART
+        PUSH AF
 
 LoopOut:			; Ensure the byte was transmitted
         IN A,(UARTLSR)          ; Read LSR
         BIT 6,A                 ; Check bit 6 (THR empty, line idle)
         JP Z,LoopOut
         POP AF                  ;bring back our registers
-        POP BC
+
         RET
 
 ;; Read a character from the UART and place in register A
 Input:
-        PUSH BC
-        LD C,UART               ; Write output UART port to reg C for use later
-LoopIn:
 	IN A,(UARTLSR)		        ; Read LSR
 	BIT 0,A			            ; Check bit 0 (RHR byte ready)
-	JP Z,LoopIn                 ; If zero, keep waiting for data
-	IN A,(C)		            ; Place ready character into A
-        POP BC
+	JP Z,Input                ; If zero, keep waiting for data
+	IN A,(UART)		            ; Place ready character into A
 	RET
 
 splashScreen: .asciiz "\r\n\r\nWelcome to Z80 ROM MONITOR\r\n (c)Nathan Safran 2021\r\n\r\n\r\n"
-initMessage: .asciiz "\r\nEnter l to load data into RAM\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nPress e to jump execution to $4000\r\nEnter s to jump execution to specified address\r\nEnter D to disable ROM\r\n:"
+initMessage: .asciiz "\r\nEnter l to load data into RAM\r\nEnter L to load data to specified address\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nPress e to jump execution to $4000\r\nEnter s to jump execution to specified address\r\nEnter D to disable ROM\r\n:"
 loadMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000\r\nYou may have to send 1 more byte after loading\r\nReady to load:\r\n"   ;needs the -esc option to treat these as cr and lf
+beginLoadMessage: .asciiz "\r\nBegin sending data\r\n"
 ;;initMessage: .asciiz "test"
 dataLoadedMessage: .asciiz "\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\nData has been loaded into RAM\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
 CRLF: .asciiz "\r\n"
 KeepPrintMessage: .asciiz"\r\nPress c to continue printing\r\nPress any key to return to menu\r\n"
 WhatAddrMessage: .asciiz "\r\nEnter address in HEX. Capital letters only\r\n"
-
+WhatDataLenMessage: .asciiz "\r\nEnter data length in HEX. Capital letters only\r\n"
 DATA:
 		DEFB	30h	; 0
 		DEFB	31h	; 1

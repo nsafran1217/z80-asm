@@ -2,7 +2,7 @@
 DIVISOR = $0C
 UART = $00
 UARTLSR = $05   
-RAMSTART = $5000 
+RAMSTART = $4000 
 DATALEN = $1000 ;4k bytes
 
 IDESTATUS = $47
@@ -14,13 +14,38 @@ IDEDRIVEHEADREG = $46
 IDEDATAREG = $40
     
     
-        .org $4000                  ;Our rom starts at $0000 to $3FFF
+        .org $0000                  ;Our rom starts at $0000 to $3FFF
                                 ;RAM from $4000 to $ffff
 
 Setup:
+        ; Bring up OUT2 GPIO pin first, so we know things are starting like they're supposed to
+        IN A,($04)
+        OR %00001000            ;Bit 3 is GPIO2
+        OUT ($04), A
+
+        ; Set Divisor Latch Enable
+        LD A,%10000000          ; Set Div Latch Enable to 1
+        OUT ($03),A             ; Write LCR
+        ; Set divisor to 12 (1.8432 MHz / 12 / 16 = 9600bps)
+        LD A,DIVISOR
+        OUT ($00),A             ; DLL 0x0C (#12)
+        LD A,$00
+        OUT ($01),A             ; DLM 0x00
+
+        LD A,%00000011          ; Set DLE to 0, Break to 0, No parity, 1 stop bit, 8 bytes
+        OUT ($03),A             ; Write now configured LCR
+
+	LD SP,$AFFF		        ; Initialise the stack pointer to $AFFF (it will grow DOWN in RAM)
+
+        LD IY,splashScreen
+        CALL PrintStr
+   
         JP MainMenu             ;Go to main menu
 
-
+        .org $0030
+Disk_read_jump:           
+        CALL disk_read            ;Known address of $0030 for the disk read subroutine
+        ret
 
 PrintStr: ;Print a string indexed in IY
         PUSH AF
@@ -59,12 +84,21 @@ MainMenu:
         JP Z,StartExecuteAddr   ;specify address to execute from
         CP 'D'
         JP Z, DisableRom         ;go to disable rom subroutine
+        CP 'C'
+        JP Z,LoadCPM
         CP 'R'
         JP Z,ReadDataFromHDD
         CP 'W'
         JP Z,WriteDataToHDD
         JP MainMenu             ;If none match, reprint the message
 
+
+LoadCPM:
+        ld	hl,4000h        ;Get CP/m Loader off disk and store in begining of RAM
+        ld	bc,0000h
+        ld	e,00h
+        call 	disk_read
+        jp	4000h           ;CP/M Loader that was just pulled off the disk
 
 ReadDataFromHDD:
         LD IY,ReadWriteDataToHDDMSG
@@ -83,7 +117,7 @@ ReadDataFromHDD:
         CALL disk_read
 
         JP MainMenu
-WriteDataToHDD
+WriteDataToHDD:
         LD IY,AreYouSureMsg
         CALL PrintStr
         CALL Input
@@ -467,6 +501,6 @@ DATA:
 		DEFB	46h	; F
 
 
-    .org $4ffe
+    .org $3ffe
 
     .word $0000

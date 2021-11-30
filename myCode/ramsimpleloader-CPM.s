@@ -2,7 +2,7 @@
 DIVISOR = $0C
 UART = $00
 UARTLSR = $05   
-RAMSTART = $5000 
+RAMSTART = $4000 
 DATALEN = $1000 ;4k bytes
 
 IDESTATUS = $47
@@ -13,14 +13,20 @@ IDELBABITS15TO23 = $45
 IDEDRIVEHEADREG = $46
 IDEDATAREG = $40
     
-    
-        .org $4000                  ;Our rom starts at $0000 to $3FFF
-                                ;RAM from $4000 to $ffff
-
-Setup:
+               ;;YOU NEED TO MANUALLY REMOVE THE ZERO PADDING AND FIX THE LD INSTRUCTIONS. CODE_END -  code_start NEEDS FIXED
+;Code to start program and move to higher memory
+;
+        .org	$0100
+        ld	hl,code_origin	;start of code to transfer
+        ld	bc,code_end-code_start+1	;length of code to transfer
+        ld	de,$B000	;target of transfer
+        ldir			;Z80 transfer instruction
+        jp	$B000
+code_origin: 					;address of first byte of code before transfer
+;	
+       .org $B000
+code_start:			
         JP MainMenu             ;Go to main menu
-
-
 
 PrintStr: ;Print a string indexed in IY
         PUSH AF
@@ -45,26 +51,21 @@ MainMenu:
         CALL PrintStr           ;Print message
         CALL Input               ;Wait for user Input
         CALL OutputChar         ;Echo char
-        CP 'e'                  ;Is char e?
-        JP Z, StartExecute4k    ;Yes, then StartExectuion
         CP 'v'                  
         JP Z, ViewHexData
-        CP 'l'
-        JP Z, LoadDataTo4k
         CP 'L'
         JP Z,LoadDataToAddress
         CP 'w'
         JP Z,WriteHexData
         CP 's'
         JP Z,StartExecuteAddr   ;specify address to execute from
-        CP 'D'
-        JP Z, DisableRom         ;go to disable rom subroutine
         CP 'R'
         JP Z,ReadDataFromHDD
         CP 'W'
         JP Z,WriteDataToHDD
+        CP 'C'
+        JP Z,$FA00
         JP MainMenu             ;If none match, reprint the message
-
 
 ReadDataFromHDD:
         LD IY,ReadWriteDataToHDDMSG
@@ -125,11 +126,7 @@ LoadDataToAddress:
         CALL PrintStr           ;Print the message
         JP ReadDataLoop
 
-LoadDataTo4k:
-        LD IY,loadMessage       ;Load message address into index register IY
-        CALL PrintStr           ;Print the message
-        LD HL,RAMSTART          ;Load starting ram address into HL
-        LD DE,DATALEN           ;Load length of data into DE
+
 ReadDataLoop:			; Main read/write loop
 	CALL Input		; Read a byte from serial terminal
         ;CALL Output
@@ -146,10 +143,6 @@ ReadDataLoop:			; Main read/write loop
         CALL PrintStr
         JP MainMenu
 
-StartExecute4k:
-        CALL NewLine
-        LD HL,RAMSTART          ;Set ram address back to start
-        JP (HL)                 ;And start exectuon there
 
 StartExecuteAddr:
         LD IY,WhatAddrMessage   
@@ -157,14 +150,6 @@ StartExecuteAddr:
         CALL AskForHex     ;Get addr from user
         CALL NewLine
         JP (HL)                 ;And start exectuon there
-
-DisableRom:
-        PUSH BC
-        LD C,$70                ;Load disable rom address
-        LD B,$01                ;Load disable rom bit
-        OUT (C),B               ;send bit
-        POP BC
-        JP MainMenu       
 
 ;;Gets 4 digit hex number from user, stores in HL Destorys all registers
 AskForHex:
@@ -437,7 +422,7 @@ Input:
 	RET
 
 splashScreen: .asciiz "\r\n\r\nWelcome to Z80 ROM MONITOR\r\n (c)Nathan Safran 2021\r\n\r\n\r\n"
-initMessage: .asciiz "\r\nEnter l to load data into RAM at 4k\r\nEnter L to load data to specified address\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nPress e to jump execution to $4000\r\nEnter s to jump execution to specified address\r\nEnter D to disable ROM\r\nEnter R to read data from HDD\r\nEnter W to write data to HDD\r\nEnter C to Start CP/M\r\n:"
+initMessage: .asciiz "\r\nEnter L to load data to specified address\r\nEnter v to view a HEX address\r\nEnter w to write value to address\r\nEnter s to jump execution to specified address\r\nEnter R to read data from HDD\r\nEnter W to write data to HDD\r\nEnter C to return to CP/M\r\n:"
 loadMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000S\r\nReady to load:\r\n"   ;needs the -esc option to treat these as cr and lf
 beginLoadMessage: .asciiz "\r\nBegin sending data:\r\n"
 ;;initMessage: .asciiz "test"
@@ -467,6 +452,5 @@ DATA:
 		DEFB	46h	; F
 
 
-    .org $4ffe
-
-    .word $0000
+code_end:
+        end

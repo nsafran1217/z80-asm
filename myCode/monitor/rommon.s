@@ -1,9 +1,6 @@
-DIVISOR = $0C
-UART = $00
-UARTLSR = $05   
 RAMSTART = $5000 
 DATALEN = $1000 ;4k bytes
-;COMMANDSTRING = RAMSTART + DATALEN - $100
+
 
 
 
@@ -16,34 +13,20 @@ Start:
     JP CommandPrompt
 
 
+    .include uart.s
+    .include String.s
+    .include hexout.s
+    .include hexdumptest.s
 
-    .include hexdump.s
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;Print a string indexed in IY
-;Must be NUL terminated (.asciiz)
-PrintStr: 
-        PUSH AF
-PrintStrLoop:
-        LD A,(IY)               ;LD into A value at address in IY
-        CALL OutputChar         ;Output A
-        INC IY                  ;INC IY, which is incrementing the address of the message
-        LD A,(IY)               ;LD into A the next char to be printed
-        CP $00                  ;Check if that char is 0. CP subtracts value from A but doesnt chnage A, only updates flags
-        JP NZ,PrintStrLoop          ;If its not 0, go back to Alert and continue printing
-        POP AF
-        RET
-        
-NewLine:
-        LD IY,CRLF
-        CALL PrintStr
-        RET
 
 HelpCMD:
     LD IY, HelpMSG
     CALL PrintStr
     JP CommandPrompt
 ReadCMD:
-    CALL ViewHexData
+    CALL ViewHexDataTest
     JP CommandPrompt
 WriteCMD:
 
@@ -298,151 +281,11 @@ ContinueDELDelimit:
     JP CommandPromptLoop
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
-;IN    HL     Address of string1.
-;      DE     Address of string2.
-;OUT   zero   Set if string1 = string2, reset if string1 != string2.
-;      carry  Set if string1 > string2, reset if string1 <= string2.
-;from https://tutorials.eeems.ca/ASMin28Days/lesson/day16.html#cmp
-CmpStrings:
-    PUSH   HL
-    PUSH   DE
 
-    LD     A, (DE)          ; Compare lengths to determine smaller string
-    CP     (HL)            ; (want to minimize work).
-    JR     C, Str1IsBigger
-    LD     A, (HL)
-
-Str1IsBigger:
-    LD     C, A             ; Put length in BC
-    LD     B, 0
-    INC    DE              ; Increment pointers to meat of string.
-    INC    HL
-
-CmpLoop:
-    LD     A, (DE)          ; Compare bytes.
-    CPI
-    JR     NZ, NoMatch      ; If (HL) != (DE), abort.
-    INC    DE              ; Update pointer.
-    JP     PE, CmpLoop
-
-    POP    DE
-    POP    HL
-    LD     A, (DE)          ; Check string lengths to see if really equal.
-    CP     (HL)
-    RET
-
-NoMatch:
-    DEC    HL
-    CP     (HL)            ; Compare again to affect carry.
-    POP    DE
-    POP    HL
-    RET
-
-Oth
-
-
-;; Take a character in register A and output to the UART, 
-OutputChar:
-        OUT (UART),A		; Send character to UART
-        PUSH AF
-LoopOut:			; Ensure the byte was transmitted
-        IN A,(UARTLSR)          ; Read LSR
-        BIT 6,A                 ; Check bit 6 (THR empty, line idle)
-        JP Z,LoopOut
-        POP AF                  ;bring back our registers
-
-        RET
-
-;; Read a character from the UART and place in register A
-Input:
-	IN A,(UARTLSR)		  ; Read LSR
-	BIT 0,A			  ; Check bit 0 (RHR byte ready)
-	JP Z,Input                ; If zero, keep waiting for data
-	IN A,(UART)		  ; Place ready character into A
-	RET
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-; OUTPUT VALUE OF A IN HEX ONE NYBBLE AT A TIME
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-hexout:
-    	PUSH BC
-		PUSH AF
-		LD B, A
-		; Upper nybble
-		SRL A
-		SRL A
-		SRL A
-		SRL A
-		CALL TOHEX
-
-
-        CALL OutputChar
-
-		
-		; Lower nybble
-		LD A, B
-		AND 0FH
-		CALL TOHEX
-
-
-		CALL OutputChar
-
-		
-		POP AF
-		POP BC
-		RET
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-; TRANSLATE value in lower A TO 2 HEX CHAR CODES FOR DISPLAY
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-TOHEX:
-		PUSH HL
-		PUSH DE
-		LD D, 0
-		LD E, A
-		LD HL, DATA
-		ADD HL, DE
-		LD A, (HL)
-		POP DE
-		POP HL
-		RET
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 	ASCII char code for 0-9,A-F in A to single hex digit
-;;    subtract $30, if result > 9 then subtract $7 more
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-ATOHEX:
-		SUB $30
-		CP 10
-		RET M		; If result negative it was 0-9 so we're done
-		SUB $7		; otherwise, subtract $7 more to get to $0A-$0F
-		RET		
-
-	
-DATA:
-		DEFB	30h	; 0
-		DEFB	31h	; 1
-		DEFB	32h	; 2
-		DEFB	33h	; 3
-		DEFB	34h	; 4
-		DEFB	35h	; 5
-		DEFB	36h	; 6
-		DEFB	37h	; 7
-		DEFB	38h	; 8
-		DEFB	39h	; 9
-		DEFB	41h	; A
-		DEFB	42h	; B
-		DEFB	43h	; C
-		DEFB	44h	; D
-		DEFB	45h	; E
-		DEFB	46h	; F
-
-CRLF:           .asciiz     "\r\n"
 
 TestLoadMsg:    .asciiz     "\r\n\r\nStart Test\r\n\r\n"
 
@@ -450,11 +293,9 @@ InvalidCommandMSG:  .asciiz "\r\nInvalid Command -- "
 
 HelpMSG:        .asciiz "\r\nValid Commands. Use all CAPS.\r\nHELP -- Display this message\r\nREAD -- Read value\r\nWRITE -- Write Value\r\nBEEP -- Beep\r\nRESET -- JP to $0000\r\n"
 
-COMMANDSTRING:
-    blk 100             ;create a block of 100 bytes
 
-COMMANDARGS:            ;Length followed by address of argument. All store in COMMANDSTRING still.
-    blk 20              ;For command "READ 1FFF 10F" it would be 
+;;Lets try something new again. I dont like the stuff below. Its dumb
+
 
 ;Lets try something new. Create a few different arg variables
     .org $4400

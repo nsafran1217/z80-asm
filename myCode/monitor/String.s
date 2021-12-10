@@ -15,9 +15,11 @@ PrintStrLoop:
         RET
 ;Print NewLine to serial     
 NewLine:
-        LD IY,CRLF
-        CALL PrintStr
-        RET
+    PUSH IY
+    LD IY,CRLF
+    CALL PrintStr
+    POP IY
+    RET
 
  
 ;IN    HL     Address of string1.

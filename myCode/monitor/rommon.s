@@ -8,7 +8,7 @@ DATALEN = $1000 ;4k bytes
 
 Start:
     LD SP,$ffff
-    LD IY,TestLoadMsg
+    LD IY,splashScreen
     CALL PrintStr
     JP CommandPrompt
 
@@ -18,11 +18,14 @@ Start:
     .include hexout.s
     .include hexdumptest.s
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;Command number to execute is in A
 CommandExecute:
     CALL hexout
+    CALL NewLine
     CP $00
     JP Z, HelpCMD
     CP $02
@@ -40,39 +43,31 @@ CommandExecute:
 HelpCMD:
     LD IY, HelpMSG
     CALL PrintStr
+    CALL PrintRegs
     JP CommandPrompt
 ReadCMD:
     CALL ViewHexDataTest
     JP CommandPrompt
 WriteCMD:
 
-LoadCMD:
-    ;JP CommandPrompt
-
-    ;;;;;;;;;;;;;;;;;;;;;;;
-    ;im struggling to figure out the best way to go through the args. maybe look into splitting args first and just getting pointers to them in IY and IX. then loop through and convert to number
-    ;But I want to accept no args as well. THe problem is that memory location isnt cleared out. Maybe I need to have a cleanup function when commandprompt is loaded
-    ;Then just get up to 2 args, keyed on the space. i still need to make sure that i get 4 chars in each arg. This is hard... maybe I abandon args. But Whats the point of a cmd without args. F
-    ;;;;;;;;;;;;;;;;;;;;
-
-
+LoadCMD:   
 
     LD IY, ARGS         ;LD the pointer to the arg string
     LD IX, $0000
-    LD E, 1             ;Keep track of what arg we are doing
+    LD E, 0             ;Keep track of what arg we are doing
 ParseArgsLoadCMD:
-    INC E
+    INC E               ;1C, trigger on this for analyzer
     LD A, E
-    CP $02
+    CP $03
     JP Z, InvalidArgLenth
 CheckLoadedArgLen:
     LD D, 5             ;we want 4 characters in the arg
     LD A, (IY)          ;Load first arg char, should be $20
     CP $00              ;If its NUL, then there are no args
     JP Z, LoadCMDNoArgs
-    INC IY              ;Then we just inc to non space char and loop through counting
-
+    
 CheckLoadedArgLenLoop:
+    INC IY              ;Then we just inc to non space char and loop through counting
     DEC D               
     LD A, (IY)          ;Load char into A
     CP $20              ;Is it a space?
@@ -80,22 +75,24 @@ CheckLoadedArgLenLoop:
     CP $00              ;Is it a NUL?
     JP Z, CheckLoadedArgLenSpaceOrNULHit
 
-    JP CheckLoadedArgLen   ;just keep looping, when we hit a delim, we jump
+    JP CheckLoadedArgLenLoop   ;just keep looping, when we hit a delim, we jump
 
 
 CheckLoadedArgLenSpaceOrNULHit: ;need to check we got 4 chars and determine if we need to get second arg
-    LD A, D
+    LD A,D
     CP $00
     JP NZ, InvalidArgLenth
+    LD A, E                 ;E is num of arg counters, we only want 2
+
+    CP $02              ;So we will jump out if we have 2 at this point. If we had a space, we already check if theres 2 up in checkloadedarglen. we shouldnt ever hit this with anything but a NUL as the next char
+    JP Z, LoadCMDTwoArgs    
     LD A, (IY)
     CP $20                  ;If next char is a space, we need another arg
     JP NZ, LoadCMDOneArg
-    LD A, E                 ;E is num of arg counters, we only want 2
-    CP $02              ;So we will jump out if we have 2 at this point. If we had a space, we already check if theres 2 up in checkloadedarglen. we shouldnt ever hit this with anything but a NUL as the next char
-    JP Z, LoadCMDTwoArgs    
 
 
-    PUSH IY              ;store this pointer in IX for use later
+
+    PUSH IY              ;store this pointer in IX for use later. This will be the first arg
     POP IX
     DEC IX                  ;Put IX back to beginning of pointer
     DEC IX
@@ -104,72 +101,6 @@ CheckLoadedArgLenSpaceOrNULHit: ;need to check we got 4 chars and determine if w
     JP ParseArgsLoadCMD
     
 
-
-
-; all this stuff is junk;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-ParseArgsLoadCheckLen:   ;Will only hit this if we hit a space or NUL. We need to make sure we got 4 chars in each argument
-    LD A, D
-    CP $00
-    JP NZ, InvalidArgument
-
-
-ParseArgsLoad:
-    LD D,$04            ;Number of numbers we need to get
-ParseArgsLoadLoop:
-    INC IY              ;skip the space, then inc through
-    LD A, (IY)          ;get the char
-    CP $20              ;Space, arg delimiter, need to do a new
-    JP Z, ParseArgsLoadCheckLen
-    CP $00              ;NUL, args ended , done parsing
-    ;JP Z, ParseArgsLastArg
-    CP $30              ;0. we dont want anything below 0
-    JP C, InvalidArgument
-    CP $48              ;G. we dont want anything above F
-    JP NC, InvalidArgument
-      
-      
-    CALL ATOHEX             ;Convert hex ascii to real number
-    PUSH AF                 ;push value to stack
-    DEC D                   ;Dec char counter
-    LD A,D                  ;Move D to A
-    CP $00                  ;Is 0?
-    JP NZ,ParseArgsLoadLoop ;Keep going if we need more CHARS
-    POP AF                  ;get low nibble
-    LD B,A                  ;put into B
-    POP AF                  ;get high nibble
-    RLC A                   ;shift nibble left 4 times
-    RLC A
-    RLC A
-    RLC A
-    OR B                    ;or with low nibble
-    LD L,A                  ;load low byte 
-
-    POP AF
-    LD B,A
-    POP AF
-    RLC A
-    RLC A
-    RLC A
-    RLC A
-    OR B
-    LD H,A                  ;load high byte 
-    
-    LD A,E
-    CP $00
-    JP Z, SecondLoadArg
-    CP $ff                  ;Overflow, too many args
-    JP Z, InvalidArgument
-    DEC E
-    PUSH HL                 ;Move the address into IX, this is pointer to where we load
-    POP IX
-
-SecondLoadArg:              ;At this point we should have pointer in IX and len of data in HL
-
-    LD A, '!'
-    CALL OutputChar
-    CALL ReadCMD            ;for testing
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 InvalidArgLenth:
     LD A, '%'
@@ -190,13 +121,78 @@ LoadCMDNoArgs:
 
     JP CommandPrompt
 
+;One arg, load at address in arg1 and 4k bytes ($1000 bytes)
 LoadCMDOneArg:                  ;pointer to arg string is at IX
+        LD A, '@'
+    CALL OutputChar
+    PUSH IX                     ;move IX to IY
+    POP IY
+    CALL PointerToValue16       ;With this my value is at HL
 
+    LD DE, $1000                ;Load length of data into DE
+    CALL PrintRegs;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    CALL ReadDataLoop
+    CALL PrintRegs;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    
     JP CommandPrompt
 
 LoadCMDTwoArgs:                 ;pointer to first arg is at IX, second is at IY
+        LD A, '#'
+    CALL OutputChar
+    CALL PointerToValue16       ;This will get the data len from IY and store at HL
+    PUSH HL                     ;Push Datalen to stack to get later
+    PUSH IX                     ;Move IX to IY
+    POP IY
+    CALL PointerToValue16       ;Get data addr to HL
 
+    POP DE                      ;Get data len out of stack
+    CALL PrintRegs;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    CALL ReadDataLoop
+    CALL PrintRegs;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+    
     JP CommandPrompt
+
+;;Take 16 bit number stored in ascii at memory location IY and convert to number, store result in HL, dont change memory
+PointerToValue16:
+
+    PUSH IY
+    LD D,$04            ;Number of numbers we need to get
+PointerToValue16Loop:
+    LD A, (IY)              ;get the char
+    INC IY
+
+
+    CALL ATOHEX             ;Convert hex ascii to real number
+    PUSH AF                 ;push value to stack
+    DEC D                   ;Dec char counter
+    LD A,D                  ;Move D to A
+    CP $00                  ;Is 0?
+    JP NZ,PointerToValue16Loop ;Keep going if we need more CHARS
+    POP BC                  ;get low nibble
+    ;LD B,A                  ;put into B
+    POP AF                  ;get high nibble
+    RLC A                   ;shift nibble left 4 times
+    RLC A
+    RLC A
+    RLC A
+    OR B                    ;or with low nibble
+    LD L,A                  ;load low byte 
+
+    POP BC
+    ;LD B,A
+    POP AF
+    RLC A
+    RLC A
+    RLC A
+    RLC A
+    OR B
+    LD H,A                  ;load high byte 
+    POP IY
+    CALL PrintRegs;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    RET
+
 
 BeepCMD:
     LD A, $07                   ;Bell character
@@ -238,6 +234,26 @@ CommandPromptLoop:
 ;    LD B, E
 ;    CP B
 ;    RET
+
+StoreInRam:                     ;Store A into RAM at HL. This increments HL
+        LD (HL),A               ;Load A into address HL points to
+        INC HL                  ; INC HL to next address
+        RET
+
+;;Read data into ram starting at address HL from serial port, data len stored at DE
+ReadDataLoop:
+	CALL Input		            ; Read a byte from serial terminal
+    CALL StoreInRam
+    DEC DE                      ;decrement bytes left to read
+    LD A,D                      ;ld highbyte of DE into A
+    CP $00                      ;check if zero
+	JP NZ, ReadDataLoop         ;if not keep looping
+    LD A,E                      ;ld low byte of DE into A
+    CP $00                      ;check if zero
+    JP NZ, ReadDataLoop         ;if not keep looping
+    RET
+
+
 
 
 CommandParse:
@@ -378,15 +394,6 @@ DelChar:
 
 
 
-
-
-TestLoadMsg:    .asciiz     "\r\n\r\nStart Test\r\n\r\n"
-
-InvalidCommandMSG:  .asciiz "\r\nInvalid Command -- "
-
-HelpMSG:        .asciiz "\r\nValid Commands. Use all CAPS.\r\nHELP -- Display this message\r\nREAD -- Read value\r\nWRITE -- Write Value\r\nBEEP -- Beep\r\nRESET -- JP to $0000\r\n"
-
-
 ;;Lets try something new again. I dont like the stuff below. Its dumb
 
     .org $4400
@@ -427,6 +434,116 @@ RESETTEXT:    .ascii  "RESET"
 LOAD:   defb    4
 LOADTEXT:    .ascii  "LOAD"
 
+
+    .include messages.s
+
+
+    
+
+PrintRegs:
+    PUSH BC
+    PUSH DE
+    PUSH IY
+    PUSH IX
+    PUSH HL
+    PUSH AF
+    LD A, 'A'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    POP AF
+    PUSH AF
+    CALL hexout
+
+    LD A, 'B'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, B
+    CALL hexout
+
+    LD A, 'C'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, C
+    CALL hexout
+
+    LD A, 'D'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, D
+    CALL hexout
+
+    LD A, 'E'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, E
+    CALL hexout
+
+    LD A, 'H'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, H
+    CALL hexout
+
+    LD A, 'L'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, L
+    CALL hexout
+
+    LD A, 'X'
+    CALL OutputChar
+    LD A, 'H'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, IXH
+    CALL hexout
+
+    LD A, 'X'
+    CALL OutputChar
+    LD A, 'L'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, IXL
+    CALL hexout
+
+    LD A, 'Y'
+    CALL OutputChar
+    LD A, 'H'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, IYH
+    CALL hexout
+
+    LD A, 'Y'
+    CALL OutputChar
+    LD A, 'L'
+    CALL OutputChar
+    LD A, ':'
+    CALL OutputChar
+    LD A, IYL
+    CALL hexout
+
+
+    POP AF
+    POP HL
+    POP IX
+    POP IY
+    POP DE
+    POP BC
+
+    CALL NewLine
+
+    RET
 
 
     .org $4ffe

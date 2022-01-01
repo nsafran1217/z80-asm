@@ -2,8 +2,6 @@ RAMSTART = $4000
 DATALEN = $1000 ;4k bytes
 
 
-
-
     .org $0000
     .include copyfromromtoram.s
 
@@ -19,7 +17,7 @@ Start:
     .include String.s
     .include hexout.s
     .include hexdump.s
-    .include printregs.s
+    ;.include printregs.s
     .include ide.s
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -261,7 +259,6 @@ ReadDataLoop:
     LD A,E                      ;ld low byte of DE into A
     CP $00                      ;check if zero
     JP NZ, ReadDataLoop         ;if not keep looping
-    call PrintRegs
     RET
 
 

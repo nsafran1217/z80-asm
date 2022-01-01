@@ -1,13 +1,6 @@
 
 ;View $100 bytes at $4400
-ViewHexDataTest:
-        ;LD IY,WhatAddrMessage   
-        ;CALL PrintStr 
-        ;LD D,$04                ;Get 4 charcters
-        ;CALL AskForHex      ;Get address from user
-        LD HL, $4400
-        CALL OutputHexData      ;output $80 data starting at HL
-        RET
+
 ResetD:
     LD D,$00
     RET
@@ -52,11 +45,11 @@ OutputHexLoop:
         JP NZ, OutputHexLoop    ;if not keep displaying
 
 
-        ;LD IY,KeepPrintMessage  ;Ask if user wants to view more hex
-        ;CALL PrintStr           ;Print
-        ;CALL Input
-        ;LD E,$80                ;Reset D incase we want to print more
-        ;CP ' '                  ;is input space?
-        ;JP Z,OutputHexData      ;Yes, print more hex,
+        LD IY,KeepPrintMessage  ;Ask if user wants to view more hex
+        CALL PrintStr           ;Print
+        CALL Input
+        LD E,$80                ;Reset D incase we want to print more
+        CP ' '                  ;is input space?
+        JP Z,OutputHexData      ;Yes, print more hex,
         RET                     ;else, go back to caller
                

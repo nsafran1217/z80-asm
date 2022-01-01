@@ -1,11 +1,10 @@
-RAMSTART = $4000 
+RAMSTART = $5000 
 DATALEN = $1000 ;4k bytes
 
 
 
 
-    .org $0000
-    .include copyfromromtoram.s
+    .org $4000
 
 Start:
     LD SP,$ffff
@@ -105,9 +104,16 @@ BeepCMD:
     CALL OutputChar
     JP MainMenu
 
-SoftRestart:
-    JP Start
+ResetCMD:
+    JP $0000
 
+DisableRomCMD:
+        PUSH BC
+        LD C,$70                ;Load disable rom address
+        LD B,$01                ;Load disable rom bit
+        OUT (C),B               ;send bit
+        POP BC
+        JP MainMenu    
     
 ReadDataFromHDDCMD:
         LD IY,ReadWriteDataToHDDMSG
@@ -170,14 +176,14 @@ MainMenu:
     JP Z,ReadCMD
     CP 's'
     JP Z,StartExecuteAddr   ;specify address to execute from
+    CP 'D'
+    JP Z, DisableRomCMD         ;go to disable rom subroutine
     CP 'C'
     JP Z,CPMCMD
     CP 'F'
     JP Z,FDDMenu
     CP 'H'
     JP Z,HDDMenu
-    CP 'R'
-    JP Z,SoftRestart
 
     JP MainMenu            
 
@@ -266,8 +272,22 @@ ReadDataLoop:
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;Lets try something new again. I dont like the stuff below. Its dumb
+
+    ;.org $4400
+
+
+
     .include messages.s
 
 
-code_end:
-        end
+
+
+
+    .org $4ffe
+
+    .word $0000

@@ -83,21 +83,6 @@ Main:				; Main read/write loop
 
 	JP Main
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     JP $0000
     .org $4ffe
 

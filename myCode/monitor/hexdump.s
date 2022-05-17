@@ -4,7 +4,7 @@
 ResetD:
     LD D,$00
     RET
-;;Output $80 address in a table starting at address in HL. Destorys all registers
+;;Output $FF address in a table starting at address in HL. Destorys all registers
 OutputHexData:
         CALL NewLine
 
@@ -37,19 +37,50 @@ OutputHexLoop:
         DEC E                   ;Dec address left to display
         INC D                   ;Inc number display per line
         LD A,D                  ;Check is we've printed 16 bytes
-        CP $10                  
-        CALL Z, NewLine         ;If we did do a new line and reset the counter
+        CP $10  
         CALL Z, ResetD
+        CALL Z, OutputAsciiValues       ;And print out ascii values   
+DonePrintingAscii:             
+
         LD A,E                  ;ld count of bytes left to display
         CP $00                  ;check if zero
         JP NZ, OutputHexLoop    ;if not keep displaying
 
-
         LD IY,KeepPrintMessage  ;Ask if user wants to view more hex
         CALL PrintStr           ;Print
         CALL Input
-        LD E,$80                ;Reset D incase we want to print more
         CP ' '                  ;is input space?
         JP Z,OutputHexData      ;Yes, print more hex,
         RET                     ;else, go back to caller
                
+OutputAsciiValues:
+        LD A,'|'
+        CALL OutputChar
+        LD A,' '
+        CALL OutputChar         ; Print out seperator
+        PUSH BC                 ; Preserve BC just in case
+        LD B, $00               ;Subrtact 16 from HL
+        LD C, $10
+        SBC HL,BC
+        POP BC
+OutputAsciiValuesLoop:
+        LD A,(HL)
+        CP $20                  ;Check if value is less than $20
+        JP C, InvalidAscii       ;If it is, Its definetly bad
+        CP $7F                  ;check if value is greater tahn $7f
+        JP C, ValidAscii       ;if it isnt, then we have valid ascii 
+InvalidAscii:
+        LD A,'.'                ;When we dont, just print a .
+
+ValidAscii:                     ;when we have a good ascii character, or a .
+        CALL OutputChar
+        INC HL                  ;Inc ram address
+        INC D                   ;Inc number display per line
+        LD A,D                  ;Check if we've printed 16 bytes
+        CP $10 
+        CALL Z, NewLine 
+        CALL Z, ResetD        
+        RET Z
+        JP OutputAsciiValuesLoop
+
+

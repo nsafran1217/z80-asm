@@ -40,7 +40,7 @@ OutputHexLoop:
         CP $10  
         CALL Z, ResetD
         CALL Z, OutputAsciiValues       ;And print out ascii values   
-DonePrintingAscii:             
+            
 
         LD A,E                  ;ld count of bytes left to display
         CP $00                  ;check if zero

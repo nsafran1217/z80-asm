@@ -5,6 +5,11 @@ DATALEN = $1000 ;4k bytes
     .org $0000
     .include copyfromromtoram.s
 
+    JP Start
+    .org $0030
+Disk_read_jump:                     ;this is a patch until I change and write a new version of diskcpmloader.s to the HDD 
+        CALL disk_read            ;Known address of $0030 for the disk read subroutine
+        ret
 Start:
     LD SP,$ffff
     CALL SetupUART

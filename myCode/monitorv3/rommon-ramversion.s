@@ -11,7 +11,7 @@ Start:
     CALL SetupUART
     LD IY,splashScreen
     CALL PrintStr
-    JP MainMenu
+    JP MainPrompt
 
 
     .include uart.s
@@ -20,6 +20,42 @@ Start:
     .include hexdump.s
     .include printregs.s
     .include ide.s
+
+
+
+
+MainPrompt:
+
+    LD A, ":"
+    CALL OutputChar
+    LD HL, TextBuffer
+    CALL ReadLine
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    JP MainPrompt            
+
+
+
+
+
+
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -32,7 +68,7 @@ ReadCMD:
     LD A, (HL)
     CALL hexout
     CALL PrintNewLine
-    JP MainMenu
+    JP MainPrompt
 
 WriteCMD:
   
@@ -47,7 +83,7 @@ WriteCMD:
     LD A,L
     POP HL
     LD (HL),A
-    JP MainMenu                 
+    JP MainPrompt                 
 
 LoadCMD4k:
     LD IY,loadMessage           ;Load message address into index register IY
@@ -55,7 +91,7 @@ LoadCMD4k:
     LD HL, RAMSTART             ;Load starting ram address into HL
     LD DE, DATALEN              ;Load length of data into DE
     CALL ReadDataLoop
-    JP MainMenu
+    JP MainPrompt
 
 LoadCMD:
     LD IY,WhatAddrMessage   
@@ -71,7 +107,7 @@ LoadCMD:
     LD IY,beginLoadMessage  ;Load message address into index register IY
     CALL PrintStr           ;Print the message
     CALL ReadDataLoop
-    JP MainMenu
+    JP MainPrompt
 
 StartExecute4k:
     CALL PrintNewLine
@@ -90,7 +126,7 @@ ViewHexData:
         LD D,$04                ;Get 4 charcters
         CALL AskForHex      ;Get address from user
         CALL OutputHexData      ;output $80 data starting at HL
-        JP MainMenu
+        JP MainPrompt
 
 CPMCMD:
         ld	hl,4000h        ;Get CP/m Loader off disk and store in begining of RAM
@@ -102,7 +138,7 @@ CPMCMD:
 BeepCMD:
     LD A, $07                   ;Bell character
     CALL OutputChar
-    JP MainMenu
+    JP MainPrompt
 
 ResetCMD:
     JP $0000
@@ -113,7 +149,7 @@ DisableRomCMD:
         LD B,$01                ;Load disable rom bit
         OUT (C),B               ;send bit
         POP BC
-        JP MainMenu    
+        JP MainPrompt    
     
 ReadDataFromHDDCMD:
         LD IY,ReadWriteDataToHDDMSG
@@ -131,13 +167,13 @@ ReadDataFromHDDCMD:
         CALL PrintNewLine
         CALL disk_read
 
-        JP MainMenu
+        JP MainPrompt
 WriteDataToHDDCMD:
         LD IY,AreYouSureMsg
         CALL PrintStr
         CALL InputChar
         CP 'Y'
-        JP NZ, MainMenu
+        JP NZ, MainPrompt
         LD IY,ReadWriteDataToHDDMSG
         CALL PrintStr
         CALL AskForHex
@@ -152,21 +188,9 @@ WriteDataToHDDCMD:
         CALL AskForHex
         CALL PrintNewLine
         CALL disk_write
-        JP MainMenu
+        JP MainPrompt
 
 
-
-MainMenu:
-
-    LD IY,MainMenuMSG       ;Load message addrinto IY
-    CALL PrintStr           ;Print message
-    LD HL, $3500
-    CALL ReadLine
-    PUSH HL
-    POP IY
-    CALL PrintStr
-
-    JP MainMenu            
 
 HDDMenu:
     LD IY,HDDMenuMSG       ;Load message addrinto IY
@@ -177,7 +201,7 @@ HDDMenu:
     JP Z,ReadDataFromHDDCMD
     CP 'W'
     JP Z,WriteDataToHDDCMD
-    JP MainMenu     
+    JP MainPrompt     
 
 FDDMenu:
     LD IY,FDDMenuMSG       ;Load message addrinto IY
@@ -188,7 +212,7 @@ FDDMenu:
     ;JP Z,ReadDataFromFDDCMD
     CP 'W'
     ;JP Z,WriteDataToFDDCMD
-    JP MainMenu          
+    JP MainPrompt          
 
 
 
@@ -254,12 +278,33 @@ ReadDataLoop:
 
 
 ;;;;;;;;;;;;;;;;
+cmnd_tbl:
+	defb	"D", " "
+	defw	DUMP_cmd
+	defb	"W", " "
+	defw	WRITE_cmd
+	defb	"R", " "
+	defw	READ_cmd
+	defb	"L", " "
+	defw	LOAD_cmd
+	defb	"C", " "
+	defw	CPM_cmd
+	defb	"G", " "
+	defw	GO_cmd
+	defb	"I", " "
+    defw    INio_cmd
+    defb    "O", " "
+    defw    OUTio_cmd
+    defb    "H", " "
+    defw    HELP_cmd
+tbl_end:
 
 
-
-
+    .include commands.s
+    
     .include messages.s
-
+TextBuffer:
+    blk $40
     .include vars.s
 
     .org $4ffe

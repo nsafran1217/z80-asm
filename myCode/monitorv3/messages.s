@@ -1,5 +1,5 @@
 
-splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v2.0\r\n(c)Nathan Safran 2021\r\nBuild Date 31-DEC-2021\r\n\r\n"
+splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.0\r\n(c)Nathan Safran 2021\r\nBuild Date 31-SEP-2022\r\n\r\n"
 
 loadMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000S\r\nReady to load:\r\n"   ;needs the -esc option to treat these as cr and lf
 
@@ -16,13 +16,11 @@ WhatValMessage: .asciiz "\r\nEnter value to write in HEX. Capital letters only,\
 ReadWriteDataToHDDMSG: .asciiz "\r\nEnter the following data in HEX caps only (4 Digits each):\r\nTrack\r\nSector\r\nDisk\r\nAddress to read/write data\r\n"
 AreYouSureMsg: .asciiz "\r\nAre you sure? This can destoy data.\r\nEnter Y to continue, any key to go back to menu\r\n:"
 
-MainMenuMSG: 
+HelpMSG: 
     .text "\r\n"
-    .text "Enter l to load data into RAM at 4k"
+    .text "l [$xxxx] [$xxxx] - Load data to [address]{$4000} of length [bytes]{$1000}"
     .text "\r\n"
-    .text "Enter L to load data to specified address"
-    .text "\r\n"
-    .text "Enter v to view a HEX address"
+    .text "d $xxxx [$xx] - Dump bytes at (address) of length [bytes]{$80}"
     .text "\r\n"
     .text "Enter w to write value to address"
     .text "\r\n"

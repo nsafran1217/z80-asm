@@ -45,7 +45,33 @@ TOHEX:
 		POP DE
 		POP HL
 		RET
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; CheckIfHex
+;   Check and convert an ascii code to 4-bit hex value
+;
+;   input:      A --- ascii character   
+;   return:     A --- 0x00 - 0x0f 
+;               CF  --- error 
+;   destroyed:  
 
+CheckIfHex:
+	CP "0"			;If its less than ASCII 0
+	JP C, NotHex
+	CP "A"			;If its A or higher
+	JP NC, LetterHex
+	SUB "0"			;Otherwise, just subtract $30 and ret
+	RET
+LetterHex:
+	CALL ToUpper
+	CP "A"			;If its less than A
+	JP C, NotHex
+	CP "G"
+	JP NC, NotHex
+	SUB  $37		;Substract $37 from A thru F
+	RET
+NotHex:  
+	SUB $FF			;Set the carry flag
+	RET
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 	ASCII char code for 0-9,A-F in A to single hex digit
 ;;    subtract $30, if result > 9 then subtract $7 more

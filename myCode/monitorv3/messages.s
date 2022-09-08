@@ -15,6 +15,7 @@ WhatValMessage: .asciiz "\r\nEnter value to write in HEX. Capital letters only,\
 
 ReadWriteDataToHDDMSG: .asciiz "\r\nEnter the following data in HEX caps only (4 Digits each):\r\nTrack\r\nSector\r\nDisk\r\nAddress to read/write data\r\n"
 AreYouSureMsg: .asciiz "\r\nAre you sure? This can destoy data.\r\nEnter Y to continue, any key to go back to menu\r\n:"
+InvalidCMDMsg: .asciiz "\r\nInvalid Command/Param. Enter H for help\r\n"
 
 HelpMSG: 
     .text "\r\n"

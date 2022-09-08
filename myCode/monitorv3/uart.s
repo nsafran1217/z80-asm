@@ -58,4 +58,4 @@ ReadLineLoop:
 EndOfLine:
         LD (HL), 0
         POP HL
-
+        RET

@@ -23,12 +23,20 @@ PrintNewLine:
 
 ;Conver char in A to uppercase
 ToUpper:
-    CP 'a'
+    CP "a"
     RET C
-    CP 'z'
+    CP "z"
     RET NC
-    LD B, $20
-    SUB B
+    SUB $20
+    RET
+;Skip to next non-space char in text buffer at (HL)
+;Returns next char addr in (HL) and char in A
+SkipSpace:
+    LD A, (HL)
+    CP ' '
+    RET NZ
+    INC HL
+    JR SkipSpace
     RET
 
  

@@ -25,21 +25,51 @@ Start:
 
 
 MainPrompt:
-
+    CALL PrintNewLine
     LD A, ":"
     CALL OutputChar
     LD HL, TextBuffer
     CALL ReadLine
+    CALL PrintNewLine
+    CALL SkipSpace
+    CALL ToUpper
+    
+
+    LD IY, CMD_tbl          ;Get command table addr
+    LD B, A                 ;LD Command user entered into B
+ParseLoop:
+    LD A, (IY)              ;LD the command in table into A
+
+    CP B                    ;Check if A contains the command user entered
+    JP Z, CommandFound      ;If yes, jump out              
+    CP $00                  ;Check if its a NUL
+    JP Z, CommandFound      ;If it is, then we are at the end of the table
+    INC IY                  ;No, INC to the next command
+    INC IY
+    INC IY
+
+    JP ParseLoop            ;And keep looking
+
+    LD A, "^"               ;Should never hit, remove THIS <----
+    CALL OutputChar
+
+CommandFound:               ;Valid command in B
+    INC IY                  ;Get to command address
+    LD C, (IY)              ;Put Address in BC
+    INC IY
+    LD B, (IY)
+    PUSH BC                 ;Put it on the stack
+    ;CALL PrintRegs
+    RET                     ;jump to value on stack
+    ;When we jump, HL is still pointing to the text buffer
+    ;Each command will handle param parseing
 
 
 
 
 
-
-
-
-
-
+    LD A, "#"               ;Should never hit, remove THIS <----
+    CALL OutputChar
 
 
 
@@ -52,23 +82,15 @@ MainPrompt:
 
 
 
-
+;B 439B
+;D 44A1 = jp 4375
 
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-ReadCMD:
 
-    LD IY,WhatAddrMessage   
-    CALL PrintStr 
-    CALL AskForHex              ;Get address from user
-    CALL PrintNewLine
-    LD A, (HL)
-    CALL hexout
-    CALL PrintNewLine
-    JP MainPrompt
 
 WriteCMD:
   
@@ -135,10 +157,7 @@ CPMCMD:
         call 	disk_read
         jp	4000h           ;CP/M Loader that was just pulled off the disk
 
-BeepCMD:
-    LD A, $07                   ;Bell character
-    CALL OutputChar
-    JP MainPrompt
+
 
 ResetCMD:
     JP $0000
@@ -172,7 +191,7 @@ WriteDataToHDDCMD:
         LD IY,AreYouSureMsg
         CALL PrintStr
         CALL InputChar
-        CP 'Y'
+        CP "Y"
         JP NZ, MainPrompt
         LD IY,ReadWriteDataToHDDMSG
         CALL PrintStr
@@ -197,9 +216,9 @@ HDDMenu:
     CALL PrintStr           ;Print message
     CALL InputChar               ;Wait for user Input
     CALL OutputChar         ;Echo char
-    CP 'R'
+    CP "R"
     JP Z,ReadDataFromHDDCMD
-    CP 'W'
+    CP "W"
     JP Z,WriteDataToHDDCMD
     JP MainPrompt     
 
@@ -208,9 +227,9 @@ FDDMenu:
     CALL PrintStr           ;Print message
     CALL InputChar               ;Wait for user Input
     CALL OutputChar         ;Echo char
-    CP 'R'
+    CP "R"
     ;JP Z,ReadDataFromFDDCMD
-    CP 'W'
+    CP "W"
     ;JP Z,WriteDataToFDDCMD
     JP MainPrompt          
 
@@ -272,37 +291,44 @@ ReadDataLoop:
     LD A,E                      ;ld low byte of DE into A
     CP $00                      ;check if zero
     JP NZ, ReadDataLoop         ;if not keep looping
-    call PrintRegs
+    ;call PrintRegs
     RET
 
 
-
+    .org $4500
 ;;;;;;;;;;;;;;;;
-cmnd_tbl:
-	defb	"D", " "
+CMD_tbl:
+    defb    "B"
+    defw    Beep_CMD
+	defb	"D"
 	defw	DUMP_cmd
-	defb	"W", " "
+	defb	"W"
 	defw	WRITE_cmd
-	defb	"R", " "
+	defb	"R"
 	defw	READ_cmd
-	defb	"L", " "
+	defb	"L"
 	defw	LOAD_cmd
-	defb	"C", " "
-	defw	CPM_cmd
-	defb	"G", " "
+	defb	"B"
+	defw	BOOT_cmd
+	defb	"G"
 	defw	GO_cmd
-	defb	"I", " "
+	defb	"I"
     defw    INio_cmd
-    defb    "O", " "
+    defb    "O"
     defw    OUTio_cmd
-    defb    "H", " "
+    defb    "H"
     defw    HELP_cmd
+    defb    $00
+    defw    InvalidCMD
 tbl_end:
 
 
     .include commands.s
-    
+
+    .org $4700
+
     .include messages.s
+    .org $4D00
 TextBuffer:
     blk $40
     .include vars.s

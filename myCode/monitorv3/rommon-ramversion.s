@@ -30,7 +30,6 @@ MainPrompt:
     CALL OutputChar
     LD HL, TextBuffer
     CALL ReadLine
-    CALL PrintNewLine
     CALL SkipSpace
     CALL ToUpper
     
@@ -295,10 +294,10 @@ ReadDataLoop:
     RET
 
 
-    .org $4500
+
 ;;;;;;;;;;;;;;;;
 CMD_tbl:
-    defb    "B"
+    defb    "Q"
     defw    Beep_CMD
 	defb	"D"
 	defw	DUMP_cmd
@@ -325,10 +324,10 @@ tbl_end:
 
     .include commands.s
 
-    .org $4700
+
 
     .include messages.s
-    .org $4D00
+
 TextBuffer:
     blk $40
 ParamBuffer:

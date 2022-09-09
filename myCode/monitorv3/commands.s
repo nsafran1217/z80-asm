@@ -1,4 +1,4 @@
-    .org $4600
+  
 DUMP_cmd:
     LD A, "d"
     CALL OutputChar
@@ -34,10 +34,16 @@ READ_cmd_Param:
     INC IY
     LD L, (IY)              ;Transfer number we want into HL
 READ_cmd_Out:
-    LD (LastAddrRead), HL
-    LD A, (HL)
+    LD IY, rPrompt          ;Reprint prompt to screen
+    CALL PrintStr
+    LD A, H
     CALL hexout
-    CALL PrintNewLine
+    LD A, L
+    CALL hexout             ;print address we are reading
+    CALL PrintSpace
+    LD (LastAddrRead), HL
+    LD A, (HL)  
+    CALL hexout             ;And print value we want
     JP MainPrompt
 
 
@@ -68,8 +74,8 @@ OUTio_cmd:
     CALL OutputChar
     JP MainPrompt
 HELP_cmd:
-    LD A, "h"
-    CALL OutputChar
+    LD IY, HelpMSG
+    CALL PrintStr
     JP MainPrompt
 
 Beep_CMD:

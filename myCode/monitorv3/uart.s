@@ -49,9 +49,9 @@ ReadLine:
         PUSH HL
 ReadLineLoop:
         CALL InputChar
-        CALL OutputChar
-        CP "\r"
+        CP "\r"  
         JP Z, EndOfLine
+        CALL OutputChar
         LD (HL), A
         INC HL
         JP ReadLineLoop

@@ -20,7 +20,13 @@ PrintNewLine:
     CALL PrintStr
     POP IY
     RET
-
+;Print Space to serial
+PrintSpace:
+    PUSH AF
+    LD A, " "
+    CALL OutputChar
+    POP AF
+    RET
 ;Conver char in A to uppercase
 ToUpper:
     CP "a"

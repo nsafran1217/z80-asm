@@ -1,13 +1,13 @@
 RAMSTART = $5000 
 DATALEN = $1000 ;4k bytes
-
+STACKADDR = $ffff
 
 
 
     .org $4000
 
 Start:
-    LD SP,$ffff
+    LD SP, STACKADDR
     CALL SetupUART
     LD IY,splashScreen
     CALL PrintStr
@@ -331,6 +331,8 @@ tbl_end:
     .org $4D00
 TextBuffer:
     blk $40
+ParamBuffer:
+    blk $10
     .include vars.s
 
     .org $4ffe

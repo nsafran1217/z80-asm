@@ -25,46 +25,25 @@ READ_cmd_Next:
     INC HL
     JP READ_cmd_Out
 
+
 READ_cmd_Param:
-    LD B, 2                 ;Only get 4 characters
-READ_cmd_Param_Loop:
-    INC HL
-    LD A, (HL)              ;Put next char of param in A
-    CALL CheckIfHex         ;If its Hex, convert it
-    JP C, InvalidCMD        ;If its not hex, exit with error
-    RLA
-    RLA
-    RLA
-    RLA
-    LD C, A
-    INC HL
-    LD A, (HL)              ;Put next char of param in A
-    CALL CheckIfHex         ;If its Hex, convert it
-    JP C, InvalidCMD        ;If its not hex, exit with error
-    OR C                    ;Combine with first nibble
-    PUSH AF
-    DJNZ READ_cmd_Param_Loop;Do this twice, then continue
-    POP AF
-    LD L, A
-    POP AF
-    LD H, A
+    LD B, 2                 ;Only get 2 8bit values
+    LD IY, ParamBuffer
+    CALL Parse_Param        ;Address to numbers we want is in (iY)
+    LD H, (IY)
+    INC IY
+    LD L, (IY)              ;Transfer number we want into HL
 READ_cmd_Out:
     LD (LastAddrRead), HL
     LD A, (HL)
     CALL hexout
     CALL PrintNewLine
     JP MainPrompt
+
+
+
 LastAddrRead:
     defw    $0000
-
-
-
-
-
-
-
-
-
 
 
 
@@ -99,6 +78,42 @@ Beep_CMD:
     JP MainPrompt
 
 InvalidCMD:
+    LD SP, STACKADDR            ;Reset the stack. Assume values on it are bad
     LD IY, InvalidCMDMsg
     CALL PrintStr
-    JP MainPrompt
+    JP MainPrompt               ;Just go back to the menu
+
+
+
+
+
+
+;Number of 8 bit params to get in B
+;Address to text buffer in HL
+;Address of number value in IY
+;Returns IY with address to number in it
+;Destroys AF, BC, HL
+Parse_Param:                
+    CALL SkipSpace
+    PUSH IY
+READ_cmd_Param_Loop:
+    LD A, (HL)              ;Put next char of param in A
+    CALL CheckIfHex         ;If its Hex, convert it
+    JP C, InvalidCMD        ;If its not hex, print error message and go back to menu
+    RLA
+    RLA
+    RLA
+    RLA
+    LD C, A                 ;Put shifted 4bit value in C
+    INC HL
+    LD A, (HL)              ;Put next char of param in A
+    CALL CheckIfHex         ;If its Hex, convert it
+    JP C, InvalidCMD        ;If its not hex, exit with error
+    OR C                    ;Combine with first nibble
+    LD (IY), A              ;Put Value in address
+    INC IY
+    INC HL
+    DJNZ READ_cmd_Param_Loop;Do this until we get all the numbers
+    POP IY
+    RET
+

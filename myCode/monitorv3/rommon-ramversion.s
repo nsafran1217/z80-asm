@@ -25,6 +25,16 @@ Start:
 
 
 MainPrompt:
+
+    LD B, $50               ;Text buffer is $40 and param buffer is $16
+    LD A, $00           
+    LD HL, TextBuffer
+ZeroTextBufferLoop:
+    LD (HL), a
+    INC HL
+    DJNZ ZeroTextBufferLoop
+
+
     CALL PrintNewLine
     LD A, ":"
     CALL OutputChar
@@ -91,20 +101,6 @@ CommandFound:               ;Valid command in B
 
 
 
-WriteCMD:
-  
-    LD IY,WhatAddrMessage   
-    CALL PrintStr 
-    CALL AskForHex              ;Get address from user
-    PUSH HL
-    LD IY,WhatValMessage   
-    CALL PrintStr
-
-    CALL AskForHex              ;Value to write is in L
-    LD A,L
-    POP HL
-    LD (HL),A
-    JP MainPrompt                 
 
 LoadCMD4k:
     LD IY,loadMessage           ;Load message address into index register IY
@@ -293,6 +289,9 @@ ReadDataLoop:
     ;call PrintRegs
     RET
 
+SetCarryFlag:
+    CP $FF
+    RET
 
 
 ;;;;;;;;;;;;;;;;

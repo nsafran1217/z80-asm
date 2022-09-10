@@ -70,7 +70,7 @@ LetterHex:
 	SUB  $37		;Substract $37 from A thru F
 	RET
 NotHex:  
-	SUB $FF			;Set the carry flag
+	CP $FF			;Set the carry flag
 	RET
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 	ASCII char code for 0-9,A-F in A to single hex digit

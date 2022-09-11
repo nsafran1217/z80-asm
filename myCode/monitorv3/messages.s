@@ -7,7 +7,6 @@ beginLoadMessage: .asciiz "\r\nBegin sending data:\r\n"
 
 dataLoadedMessage: .asciiz "\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\nData has been loaded into RAM\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
 
-KeepPrintMessage: .asciiz"\r\nPress SPACE BAR to continue printing\r\nPress any key to return to menu\r\n"
 
 WhatAddrMessage: .asciiz "\r\nEnter address in HEX. Capital letters only. 4 digits\r\n:"
 WhatDataLenMessage: .asciiz "\r\nEnter data length in HEX. Capital letters only, 4 digits\r\n:"

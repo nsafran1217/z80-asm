@@ -137,13 +137,7 @@ StartExecuteAddr:
     CALL AskForHex          ;Get addr from user
     CALL PrintNewLine
     JP (HL)                 ;And start exectuon there
-ViewHexData:
-        LD IY,WhatAddrMessage   
-        CALL PrintStr 
-        LD D,$04                ;Get 4 charcters
-        CALL AskForHex      ;Get address from user
-        CALL OutputHexData      ;output $80 data starting at HL
-        JP MainPrompt
+
 
 CPMCMD:
         ld	hl,4000h        ;Get CP/m Loader off disk and store in begining of RAM

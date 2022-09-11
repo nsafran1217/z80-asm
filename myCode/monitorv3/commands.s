@@ -1,5 +1,9 @@
   
 
+
+
+
+
 ;Number of 8 bit params to get in B
 ;Address to text buffer in HL
 ;Address of number value in IY
@@ -43,9 +47,60 @@ Check_Next_Param_Coming:    ;Check if value in HL is a space or a NUL, if not, e
 
 
 DUMP_cmd:
-    LD A, "d"
-    CALL OutputChar
+    CALL Check_Next_Param_Coming
+    JP C, DUMP_cmd_Next
+DUMP_cmd_Param
+    LD B, 2                 ;Get 4 numbers
+    LD IY, ParamBuffer
+    CALL Parse_Param
+    DEC HL                  ;Dec HL to space char or NUL
+    CALL Check_Next_Param_Coming
+    JP C, DUMP_cmd_defualt  ;If NUL, just dump default ammount
+    INC IY                  ;If we have a vlue coming,
+    INC IY                  ;Put IY to next free addres
+    LD B, 1                 ;And get 2 numbers
+    CALL Parse_Param
+    ;;we want to check if its a 16 bit number or a 8 bit number. so check if next value is valid hex, then parse it into IY
+    LD A, (HL)
+    LD B, 1                 ;Prep to get one more byte
+    INC IY
+    LD (IY), 0              ;Put 0 just incase its not vale
+    CALL CheckIfHex
+    CALL NC, Parse_Param    ;If its not a carry flag, then we have valid hex to parse
+    LD C, (IY)              ;Put ammount to dump in B, this will be 0 if its 2 bytes
+    DEC IY
+    LD B, (IY)              ;And next bit in C
+    DEC IY                  ;Put IY at sane position, 1st byte of address
+    DEC IY
+    LD H, (IY)
+    INC IY
+    LD L, (IY)              ;LD address to dump to into HL
+    CALL PrintRegs
+    JP DUMP_cmd_OUT
+
+DUMP_cmd_Next:              ;Dump next section of memory
+    LD HL, (LastAddrDump)
+    LD B, $01
+    LD C, $00
+    ADD HL,BC 
+   ; DEC HL
+    JP DUMP_cmd_OUT
+
+DUMP_cmd_defualt:           ;Dump defualt amount
+    LD B, $01
+    LD C, $00               ;$100 is the default ammount to dump
+    LD H, (IY)
+    INC IY
+    LD L, (IY)              ;LD address to dump to into HL
+
+DUMP_cmd_OUT:
+
+    LD (LastAddrDump), HL
+    CALL OutputHexDumpTable
     JP MainPrompt
+
+LastAddrDump:
+    defw $0000
 
 
 WRITE_cmd:                  ;Write value entered to address entered. If address isnt entered, use the last address written

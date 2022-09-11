@@ -1,14 +1,19 @@
 
-;View $100 bytes at $4400
+
 
 ResetD:
     LD D,$00
     RET
-;;Output $FF address in a table starting at address in HL. Destorys all registers
-OutputHexData:
+;;Output BC address in a table starting at address in HL. Destorys all registers
+OutputHexDumpTable:
         CALL PrintNewLine
 
-        LD E,$FF                ;Load length of data to display into E -1 so the displayed address is correct
+        ;LD E,$FF                ;Load length of data to display into E -1 so the displayed address is correct
+        ;LD B, $01
+        ;LD C, $00 
+
+        DEC BC                  ;So value is displayed correctly
+
         LD A,H                  ;display highbyte
         CALL hexout
         LD A,L
@@ -17,14 +22,16 @@ OutputHexData:
         CALL OutputChar
         PUSH HL                 ;Push HL to retrieve later. This contains the real address we need
 
-        ADC HL,DE               ;16 bit add
-              
+        ADD HL,BC               ;16 bit add
         LD A,H                  ;display highbyte
         CALL hexout
         LD A,L
         CALL hexout             ;display lowbyte
 
-        LD E,$00                ;Load length of data to display into E
+
+
+        INC BC                  ;Restore correct value
+
         POP HL                  ; restore HL to the real address
         CALL PrintNewLine
         CALL ResetD
@@ -34,23 +41,24 @@ OutputHexLoop:
         LD A,' '
         CALL OutputChar
         INC HL                  ;Inc ram address
-        DEC E                   ;Dec address left to display
+        DEC BC                   ;Dec address left to display           ;;;;;
+       ; CALL PrintRegs
         INC D                   ;Inc number display per line
-        LD A,D                  ;Check is we've printed 16 bytes
+        LD A,D                  ;Check if we've printed 16 bytes
         CP $10  
         CALL Z, ResetD
+                                                        ;;;;   BC will have bytes to print?
         CALL Z, OutputAsciiValues       ;And print out ascii values   
-            
+                                                          ;;;;
 
-        LD A,E                  ;ld count of bytes left to display
+        LD A,B                  ;ld count of bytes left to display
         CP $00                  ;check if zero
+        JP Z, OutputHexLoopReallyDone
+        JP OutputHexLoop        
+OutputHexLoopReallyDone:        ;Check second byte if its zero
+        LD A, C
+        CP $00
         JP NZ, OutputHexLoop    ;if not keep displaying
-
-        LD IY,KeepPrintMessage  ;Ask if user wants to view more hex
-        CALL PrintStr           ;Print
-        CALL InputChar
-        CP ' '                  ;is input space?
-        JP Z,OutputHexData      ;Yes, print more hex,
         RET                     ;else, go back to caller
                
 OutputAsciiValues:
@@ -58,7 +66,7 @@ OutputAsciiValues:
         CALL OutputChar
         LD A,' '
         CALL OutputChar         ; Print out seperator
-        PUSH BC                 ; Preserve BC just in case
+        PUSH BC
         LD B, $00               ;Subrtact 16 from HL
         LD C, $10
         SBC HL,BC

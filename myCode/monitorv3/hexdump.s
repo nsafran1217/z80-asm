@@ -27,7 +27,7 @@ OutputHexDumpTable:
         LD A, $00 
         LD IY, OffsetMSG
         CALL PrintStr              
-OffsetLabelLoop:
+OffsetLabelLoop:                ;This prints 01 thru 0f on the top of the table
         CALL hexout
         CALL PrintSpace
         INC A
@@ -67,7 +67,7 @@ OutputHexLoopReallyDone:        ;Check second byte if its zero
         JP NZ, OutputHexLoop    ;if not keep displaying
         RET                     ;else, go back to caller
 
-OutputHexTableRowName:              
+OutputHexTableRowName:          ;Print value in HL for each row. Basically row label    
         LD A,H                  ;display highbyte
         CALL hexout
         LD A,L

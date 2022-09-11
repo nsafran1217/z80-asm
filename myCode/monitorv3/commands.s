@@ -170,14 +170,56 @@ READ_cmd_Out:
     CALL hexout             ;And print value we want
     JP MainPrompt
 LastAddrRead:
-    defw    $0000
+    defw $0000
 
 
 
 LOAD_cmd:
-    LD A, "l"
-    CALL OutputChar
+    LD DE, $1000            ;Put defualt data length here incase we never get it
+    CALL Check_Next_Param_Coming
+    JP C, LOAD_cmd_Default
+
+LOAD_cmd_Param
+    LD B, 2                 ;Get 4 numbers
+    LD IY, ParamBuffer
+    CALL Parse_Param
+    DEC HL                  ;Dec HL to space char or NUL
+    CALL Check_Next_Param_Coming
+    JP C, LOAD_cmd_defualtLen;If NUL, just dump default ammount
+    INC IY                  ;If we have a vlue coming,
+    INC IY                  ;Put IY to next free addres
+    LD B, 2                 ;get 4 numbers
+    CALL Parse_Param        ;IY is currently at second param
+    LD D, (IY)              ;Put data len in DE 
+    INC IY
+    LD E, (IY)  
+    DEC IY                  ;Put IY at sane position, 1st byte of address to load into
+    DEC IY                  ;We dont need to do this if we only get 1 param
+    DEC IY
+LOAD_cmd_defualtLen:
+    LD H, (IY)
+    INC IY
+    LD L, (IY)              ;LD address to load to into HL
+    JP LOAD_cmd_ReadyToLoad
+
+
+
+LOAD_cmd_Default:
+    LD HL, $4000                ;Load default address to put data to into HL
+    LD IY, loadDefaultMessage
+    CALL PrintStr
+
+LOAD_cmd_ReadyToLoad:
+    CALL PrintRegs
+    LD (AddressLoadedTo), HL
+    LD IY,beginLoadMessage  ;Load message address into index register IY
+    CALL PrintStr           ;Print the message
+    CALL ReadDataLoop
     JP MainPrompt
+
+AddressLoadedTo:
+    defw $4000
+;;;;;;;;;;;;;;
 BOOT_cmd:
     LD A, "b"
     CALL OutputChar

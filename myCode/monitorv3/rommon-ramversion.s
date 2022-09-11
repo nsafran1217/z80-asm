@@ -26,7 +26,7 @@ Start:
 
 MainPrompt:
 
-    LD B, $50               ;Text buffer is $40 and param buffer is $16
+    LD B, $50               ;Text buffer is $40 and param buffer is $16. This covers both
     LD A, $00           
     LD HL, TextBuffer
 ZeroTextBufferLoop:
@@ -75,25 +75,11 @@ CommandFound:               ;Valid command in B
 
 
 
-
-
     LD A, "#"               ;Should never hit, remove THIS <----
     CALL OutputChar
 
 
-
-
-
     JP MainPrompt            
-
-
-
-
-
-
-;B 439B
-;D 44A1 = jp 4375
-
 
 
 
@@ -101,30 +87,6 @@ CommandFound:               ;Valid command in B
 
 
 
-
-LoadCMD4k:
-    LD IY,loadMessage           ;Load message address into index register IY
-    CALL PrintStr               ;Print the message
-    LD HL, RAMSTART             ;Load starting ram address into HL
-    LD DE, DATALEN              ;Load length of data into DE
-    CALL ReadDataLoop
-    JP MainPrompt
-
-LoadCMD:
-    LD IY,WhatAddrMessage   
-    CALL PrintStr 
-    CALL AskForHex
-    PUSH HL
-    LD IY,WhatDataLenMessage   
-    CALL PrintStr 
-    CALL AskForHex
-    LD D,H
-    LD E,L
-    POP HL
-    LD IY,beginLoadMessage  ;Load message address into index register IY
-    CALL PrintStr           ;Print the message
-    CALL ReadDataLoop
-    JP MainPrompt
 
 StartExecute4k:
     CALL PrintNewLine
@@ -283,9 +245,6 @@ ReadDataLoop:
     ;call PrintRegs
     RET
 
-SetCarryFlag:
-    CP $FF
-    RET
 
 
 ;;;;;;;;;;;;;;;;

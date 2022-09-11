@@ -62,20 +62,24 @@ DUMP_cmd_Param
     CALL Parse_Param
     ;;we want to check if its a 16 bit number or a 8 bit number. so check if next value is valid hex, then parse it into IY
     LD A, (HL)
+    CALL CheckIfHex
+    JP C, DUMP_cmd_8Bit   ;If its not a carry flag, then we have valid hex to parse
     LD B, 1                 ;Prep to get one more byte
     INC IY
-    LD (IY), 0              ;Put 0 just incase its not vale
-    CALL CheckIfHex
-    CALL NC, Parse_Param    ;If its not a carry flag, then we have valid hex to parse
-    LD C, (IY)              ;Put ammount to dump in B, this will be 0 if its 2 bytes
+    CALL Parse_Param
+    LD C, (IY)              ;Put ammount to dump in BC, 
     DEC IY
-    LD B, (IY)              ;And next bit in C
+    LD B, (IY)              ;And next bit in B
+    JP DUMP_cmd_LD_Addr
+DUMP_cmd_8Bit:
+    LD C, (IY)
+    LD B, $00               ;Only 2 digits, so only load C with value              
+DUMP_cmd_LD_Addr:
     DEC IY                  ;Put IY at sane position, 1st byte of address
     DEC IY
     LD H, (IY)
     INC IY
     LD L, (IY)              ;LD address to dump to into HL
-    CALL PrintRegs
     JP DUMP_cmd_OUT
 
 DUMP_cmd_Next:              ;Dump next section of memory

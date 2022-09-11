@@ -4,38 +4,46 @@
 ResetD:
     LD D,$00
     RET
-;;Output BC address in a table starting at address in HL. Destorys all registers
+;;Output BC addresses in a table starting at address in HL. Assume Destorys all registers
 OutputHexDumpTable:
         CALL PrintNewLine
-
-        ;LD E,$FF                ;Load length of data to display into E -1 so the displayed address is correct
-        ;LD B, $01
-        ;LD C, $00 
-
-        DEC BC                  ;So value is displayed correctly
-
+        PUSH BC
+        DEC BC                  ;So value is displayed correctly 
         LD A,H                  ;display highbyte
         CALL hexout
         LD A,L
         CALL hexout             ;display lowbyte
-        LD A,'-'
+        LD A,"-"
         CALL OutputChar
         PUSH HL                 ;Push HL to retrieve later. This contains the real address we need
-
         ADD HL,BC               ;16 bit add
         LD A,H                  ;display highbyte
         CALL hexout
         LD A,L
         CALL hexout             ;display lowbyte
+        CALL PrintNewLine
+        
+        LD B, $10               ;Print out 16 offset lables
+        LD A, $00 
+        LD IY, OffsetMSG
+        CALL PrintStr              
+OffsetLabelLoop:
+        CALL hexout
+        CALL PrintSpace
+        INC A
+        DJNZ OffsetLabelLoop
+        CALL PrintNewLine
+        CALL PrintDashLine
 
-
-
-        INC BC                  ;Restore correct value
 
         POP HL                  ; restore HL to the real address
+        POP BC                  ;Restore correct value
         CALL PrintNewLine
         CALL ResetD
 OutputHexLoop:
+        LD A, D
+        CP $00
+        CALL Z, OutputHexTableRowName     ;Print the address on the left first
         LD A,(HL)
         CALL hexout             ;print A as hex char
         LD A,' '
@@ -47,9 +55,7 @@ OutputHexLoop:
         LD A,D                  ;Check if we've printed 16 bytes
         CP $10  
         CALL Z, ResetD
-                                                        ;;;;   BC will have bytes to print?
         CALL Z, OutputAsciiValues       ;And print out ascii values   
-                                                          ;;;;
 
         LD A,B                  ;ld count of bytes left to display
         CP $00                  ;check if zero
@@ -60,7 +66,18 @@ OutputHexLoopReallyDone:        ;Check second byte if its zero
         CP $00
         JP NZ, OutputHexLoop    ;if not keep displaying
         RET                     ;else, go back to caller
-               
+
+OutputHexTableRowName:              
+        LD A,H                  ;display highbyte
+        CALL hexout
+        LD A,L
+        CALL hexout             ;display lowbyte
+        LD A, ":"
+        CALL OutputChar
+        LD A, " "
+        CALL OutputChar
+        RET
+
 OutputAsciiValues:
         LD A,'|'
         CALL OutputChar

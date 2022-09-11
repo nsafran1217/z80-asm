@@ -7,7 +7,7 @@ beginLoadMessage: .asciiz "\r\nBegin sending data:\r\n"
 
 dataLoadedMessage: .asciiz "\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\nData has been loaded into RAM\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
 
-
+OffsetMSG:  .asciiz "Off   "
 WhatAddrMessage: .asciiz "\r\nEnter address in HEX. Capital letters only. 4 digits\r\n:"
 WhatDataLenMessage: .asciiz "\r\nEnter data length in HEX. Capital letters only, 4 digits\r\n:"
 WhatValMessage: .asciiz "\r\nEnter value to write in HEX. Capital letters only,\r\n 4 digits, put 00 for high nybble\r\n:"

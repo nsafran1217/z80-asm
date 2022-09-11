@@ -45,6 +45,13 @@ SkipSpace:
     JR SkipSpace
     RET
 
+PrintDashLine:                  ;Print a line of dashes, detroys B and A
+        LD B, 80                ;80 column display
+        LD A, "-"
+PrintDashLineLoop:
+        CALL OutputChar
+        DJNZ PrintDashLineLoop
+        RET
  
 ;IN    HL     Address of string1.
 ;      DE     Address of string2.

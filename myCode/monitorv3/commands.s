@@ -174,7 +174,7 @@ LastAddrRead:
 
 
 
-LOAD_cmd:
+LOAD_cmd:                   ;Load data from serial port into specified memeory address of specified length`
     LD DE, $1000            ;Put defualt data length here incase we never get it
     CALL Check_Next_Param_Coming
     JP C, LOAD_cmd_Default
@@ -210,7 +210,6 @@ LOAD_cmd_Default:
     CALL PrintStr
 
 LOAD_cmd_ReadyToLoad:
-    CALL PrintRegs
     LD (AddressLoadedTo), HL
     LD IY,beginLoadMessage  ;Load message address into index register IY
     CALL PrintStr           ;Print the message
@@ -219,13 +218,27 @@ LOAD_cmd_ReadyToLoad:
 
 AddressLoadedTo:
     defw $4000
-;;;;;;;;;;;;;;
+
+
+GO_cmd:
+    CALL Check_Next_Param_Coming
+    JP C, GO_cmd_Default
+GO_cmd_Param
+    LD B, 2                 ;Get 4 numbers
+    LD IY, ParamBuffer
+    CALL Parse_Param
+    LD H, (IY)
+    INC IY
+    LD L, (IY)              ;LD address to jump to into HL
+    JP (HL)                 ;JP to it
+GO_cmd_Default:
+    LD HL, (AddressLoadedTo)
+    JP (HL)
+
+
+
 BOOT_cmd:
     LD A, "b"
-    CALL OutputChar
-    JP MainPrompt
-GO_cmd:
-    LD A, "g"
     CALL OutputChar
     JP MainPrompt
 INio_cmd:

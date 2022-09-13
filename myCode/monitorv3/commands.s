@@ -81,7 +81,6 @@ DUMP_cmd_LD_Addr:
     INC IY
     LD L, (IY)              ;LD address to dump to into HL
     JP DUMP_cmd_OUT
-
 DUMP_cmd_Next:              ;Dump next section of memory
     LD HL, (LastAddrDump)
     LD B, $01
@@ -89,16 +88,13 @@ DUMP_cmd_Next:              ;Dump next section of memory
     ADD HL,BC 
    ; DEC HL
     JP DUMP_cmd_OUT
-
 DUMP_cmd_defualt:           ;Dump defualt amount
     LD B, $01
     LD C, $00               ;$100 is the default ammount to dump
     LD H, (IY)
     INC IY
     LD L, (IY)              ;LD address to dump to into HL
-
 DUMP_cmd_OUT:
-
     LD (LastAddrDump), HL
     CALL OutputHexDumpTable
     JP MainPrompt
@@ -110,7 +106,6 @@ LastAddrDump:
 WRITE_cmd:                  ;Write value entered to address entered. If address isnt entered, use the last address written
     CALL Check_Next_Param_Coming
     JP C, InvalidCMD        ;If its a NUL, then its just a w with not value, not valid
-
 WRITE_cmd_Param:
     LD B, 1                 ;Only get 1 8bit value
     LD IY, ParamBuffer      ;LD place to store params, first bit is value. next 2 bits is address
@@ -128,7 +123,6 @@ WRITE_cmd_Param:
     INC IY
     LD L, (IY)              ;LD address to write to into HL
     JP WRITE_cmd_OUT
-
 WRITE_cmd_Next:
     LD A, (IY)
     LD HL, (LastAddrWrite)
@@ -178,7 +172,6 @@ LOAD_cmd:                   ;Load data from serial port into specified memeory a
     LD DE, $1000            ;Put defualt data length here incase we never get it
     CALL Check_Next_Param_Coming
     JP C, LOAD_cmd_Default
-
 LOAD_cmd_Param
     LD B, 2                 ;Get 4 numbers
     LD IY, ParamBuffer
@@ -201,14 +194,10 @@ LOAD_cmd_defualtLen:
     INC IY
     LD L, (IY)              ;LD address to load to into HL
     JP LOAD_cmd_ReadyToLoad
-
-
-
 LOAD_cmd_Default:
     LD HL, $4000                ;Load default address to put data to into HL
     LD IY, loadDefaultMessage
     CALL PrintStr
-
 LOAD_cmd_ReadyToLoad:
     LD (AddressLoadedTo), HL
     LD IY,beginLoadMessage  ;Load message address into index register IY
@@ -220,7 +209,7 @@ AddressLoadedTo:
     defw $4000
 
 
-GO_cmd:
+GO_cmd:                     ;Jump execution to specified address. Default to address we just loaded data to
     CALL Check_Next_Param_Coming
     JP C, GO_cmd_Default
 GO_cmd_Param
@@ -237,16 +226,47 @@ GO_cmd_Default:
 
 
 
+
+INio_cmd:                       ;read value from specified IO port and display it
+    CALL Check_Next_Param_Coming
+    JP C, InvalidCMD            ;If a param isnt coming, then just exit. we need params
+    LD B,1
+    LD IY, ParamBuffer
+    CALL Parse_Param
+    LD C, (IY)                  ;Param buffer is pointing at the value we want
+    LD IY, iPrompt              ;Reprint prompt to screen
+    CALL PrintStr
+    LD A, C                     ;Reprint port we are reading
+    CALL hexout
+    CALL PrintSpace
+    IN A, (C)                   ;Read the value
+    CALL hexout
+    JP MainPrompt
+
+OUTio_cmd:                      ;write value to specified IO port
+    CALL Check_Next_Param_Coming
+    JP C, InvalidCMD            ;If a param isnt coming, then just exit. we need params
+    LD B, 1
+    LD IY, ParamBuffer
+    CALL Parse_Param
+    DEC HL
+    CALL Check_Next_Param_Coming
+    JP C, InvalidCMD
+    INC IY
+    LD B, 1
+    CALL Parse_Param
+    LD C, (IY)
+    DEC IY
+    LD A, (IY)
+    OUT (C),A
+    JP MainPrompt
+
+
+HDD_cmd:
+FDD_cmd:
+    JP MainPrompt
 BOOT_cmd:
     LD A, "b"
-    CALL OutputChar
-    JP MainPrompt
-INio_cmd:
-    LD A, "i"
-    CALL OutputChar
-    JP MainPrompt
-OUTio_cmd:
-    LD A, "o"
     CALL OutputChar
     JP MainPrompt
 HELP_cmd:
@@ -258,6 +278,8 @@ Beep_CMD:
     LD A, $07                   ;Bell character
     CALL OutputChar
     JP MainPrompt
+
+
 
 InvalidCMD:
     LD SP, STACKADDR            ;Reset the stack. Assume values on it are bad

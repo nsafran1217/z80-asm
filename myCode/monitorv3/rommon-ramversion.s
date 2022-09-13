@@ -269,6 +269,10 @@ CMD_tbl:
     defw    OUTio_cmd
     defb    "H"
     defw    HELP_cmd
+    defb    "P"
+    defw    HDD_cmd
+    defb    "F"
+    defw    FDD_cmd
     defb    $00
     defw    InvalidCMD
 tbl_end:

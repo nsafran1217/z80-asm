@@ -17,6 +17,8 @@ ReadWriteDataToHDDMSG: .asciiz "\r\nEnter the following data in HEX caps only (4
 AreYouSureMsg: .asciiz "\r\nAre you sure? This can destoy data.\r\nEnter Y to continue, any key to go back to menu\r\n:"
 InvalidCMDMsg: .asciiz "\r\nInvalid Command/Param. Enter H for help"
 rPrompt:    .asciiz "\r:r "
+iPrompt:    .asciiz "\r:i "
+
 
 HelpMSG: 
     .text "\r\n"
@@ -32,11 +34,15 @@ HelpMSG:
     .text "\r\n"
     .text ":G [$xxxx]         | Jump execution to [address]{address from L cmd}"
     .text "\r\n"
-    .text ":B                 | Enter Boot Menu"
-    .text "\r\n"
     .text ":O $xx $xx         | Write (value) to (IO Port)"
     .text "\r\n"
     .text ":I $xx             | Read value from (IO Port)"
+    .text "\r\n"
+    .text ":B                 | Enter Boot Menu"
+    .text "\r\n"
+    .text ":H                 | Enter HDD Menu"
+    .text "\r\n"
+    .text ":F                 | Enter Floppy Menu"
     .text "\r\n"
     .text ":Q                 | Ring Bell"
     .text "\r\n"

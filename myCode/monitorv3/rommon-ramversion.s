@@ -1,8 +1,5 @@
 RAMSTART = $5000 
-DATALEN = $1000 ;4k bytes
 STACKADDR = $ffff
-
-
 
     .org $4000
 
@@ -13,20 +10,17 @@ Start:
     CALL PrintStr
     JP MainPrompt
 
-
     .include uart.s
     .include String.s
     .include hexout.s
     .include hexdump.s
     .include printregs.s
     .include ide.s
-
-
-
+    .include commands.s
 
 MainPrompt:
 
-    LD B, $50               ;Text buffer is $40 and param buffer is $16. This covers both
+    LD B, $50               ;Text buffer is $40 and param buffer is $F. This covers both
     LD A, $00           
     LD HL, TextBuffer
 ZeroTextBufferLoop:
@@ -78,42 +72,12 @@ CommandFound:               ;Valid command in B
     LD A, "#"               ;Should never hit, remove THIS <----
     CALL OutputChar
 
-
     JP MainPrompt            
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-
-
-StartExecute4k:
-    CALL PrintNewLine
-    LD HL,RAMSTART          ;Set ram address back to start
-    JP (HL)                 ;And start exectuon there
-
-StartExecuteAddr:
-    LD IY,WhatAddrMessage   
-    CALL PrintStr 
-    CALL AskForHex          ;Get addr from user
-    CALL PrintNewLine
-    JP (HL)                 ;And start exectuon there
-
-
-CPMCMD:
-        ld	hl,4000h        ;Get CP/m Loader off disk and store in begining of RAM
-        ld	bc,0000h
-        ld	e,00h
-        call 	disk_read
-        jp	4000h           ;CP/M Loader that was just pulled off the disk
-
-
-
-ResetCMD:
-    JP $0000
-
-DisableRomCMD:
+DisableRom:
         PUSH BC
         LD C,$70                ;Load disable rom address
         LD B,$01                ;Load disable rom bit
@@ -277,18 +241,13 @@ CMD_tbl:
     defw    InvalidCMD
 tbl_end:
 
-
-    .include commands.s
-
-
-
     .include messages.s
+
     defw    $0000       ;Some zeros to catch the backspace
 TextBuffer:
     blk $40
 ParamBuffer:
     blk $10
-    .include vars.s
 
     .org $4ffe
 

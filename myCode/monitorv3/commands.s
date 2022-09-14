@@ -195,7 +195,7 @@ LOAD_cmd_defualtLen:
     LD L, (IY)              ;LD address to load to into HL
     JP LOAD_cmd_ReadyToLoad
 LOAD_cmd_Default:
-    LD HL, $4000                ;Load default address to put data to into HL
+    LD HL, RAMSTART                ;Load default address to put data to into HL
     LD IY, loadDefaultMessage
     CALL PrintStr
 LOAD_cmd_ReadyToLoad:
@@ -206,7 +206,7 @@ LOAD_cmd_ReadyToLoad:
     JP MainPrompt
 
 AddressLoadedTo:
-    defw $4000
+    defw RAMSTART
 
 
 GO_cmd:                     ;Jump execution to specified address. Default to address we just loaded data to
@@ -266,9 +266,14 @@ HDD_cmd:
 FDD_cmd:
     JP MainPrompt
 BOOT_cmd:
-    LD A, "b"
-    CALL OutputChar
-    JP MainPrompt
+
+CPMCMD:
+    ld hl,RAMSTART        ;Get CP/m Loader off disk and store in begining of RAM
+    ld bc,0000h
+    ld e,00h
+    call disk_read
+    jp RAMSTART          ;CP/M Loader that was just pulled off the disk
+
 HELP_cmd:
     LD IY, HelpMSG
     CALL PrintStr

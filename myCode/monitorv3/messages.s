@@ -1,5 +1,5 @@
 
-splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.0\r\n(c)Nathan Safran 2021\r\nBuild Date 31-SEP-2022\r\n\r\n"
+splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.0\r\n(c)Nathan Safran 2022\r\nBuild Date 13-SEP-2022\r\n\r\n"
 
 loadDefaultMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000"   ;needs the -esc option to treat these as cr and lf
 
@@ -7,7 +7,7 @@ beginLoadMessage: .asciiz "\r\nBegin sending data:\r\n"
 
 dataLoadedMessage: .asciiz "\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\nData has been loaded into RAM\r\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
 
-OffsetMSG:  .asciiz "Off   "
+OffsetMSG:  .asciiz "$Off  "
 
 WhatAddrMessage: .asciiz "\r\nEnter address in HEX. Capital letters only. 4 digits\r\n:"
 WhatDataLenMessage: .asciiz "\r\nEnter data length in HEX. Capital letters only, 4 digits\r\n:"
@@ -15,7 +15,7 @@ WhatValMessage: .asciiz "\r\nEnter value to write in HEX. Capital letters only,\
 
 ReadWriteDataToHDDMSG: .asciiz "\r\nEnter the following data in HEX caps only (4 Digits each):\r\nTrack\r\nSector\r\nDisk\r\nAddress to read/write data\r\n"
 AreYouSureMsg: .asciiz "\r\nAre you sure? This can destoy data.\r\nEnter Y to continue, any key to go back to menu\r\n:"
-InvalidCMDMsg: .asciiz "\r\nInvalid Command/Param. Enter H for help"
+InvalidCMDMsg: .asciiz "\r\nInvalid Command/Param. Enter H for help."
 rPrompt:    .asciiz "\r:r "
 iPrompt:    .asciiz "\r:i "
 

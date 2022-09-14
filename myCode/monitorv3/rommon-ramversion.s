@@ -283,7 +283,7 @@ tbl_end:
 
 
     .include messages.s
-
+    defw    $0000       ;Some zeros to catch the backspace
 TextBuffer:
     blk $40
 ParamBuffer:

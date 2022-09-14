@@ -49,13 +49,35 @@ ReadLine:
         PUSH HL
 ReadLineLoop:
         CALL InputChar
-        CP "\r"  
+        CP "\r"                 ;If its a \r, we're done
         JP Z, EndOfLine
+        CP $08                  ;Backspace
+        JP Z, BackSpace
         CALL OutputChar
         LD (HL), A
         INC HL
         JP ReadLineLoop
 EndOfLine:
-        LD (HL), 0
+        LD (HL), 0              ;We put a NUL at the end of the string       
         POP HL
         RET
+
+BackSpace:
+        DEC HL
+        LD A, (HL)
+        CP $00                  ;If last char entered is not NUL
+        JP NZ, DelChar          ;Jump to DelChar
+        INC HL                  ;Put HL back to the proper location
+        JP ReadLineLoop         ;In this case,we can go back to readlineloop, since theres nothing to do
+ 
+DelChar:
+        LD A, $08               ;Backspace
+        CALL OutputChar
+        LD A, $1B               ;ANSI Escape
+        CALL OutputChar
+        LD A, '['
+        CALL OutputChar
+        LD A, 'K'               ;Erase in Line. From cursor to end
+        CALL OutputChar
+        JP ReadLineLoop         ;Can just jump back to readlineloop. HL is wheree we want it.
+

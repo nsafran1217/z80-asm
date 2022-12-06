@@ -1,5 +1,5 @@
 
-splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.0\r\n(c)Nathan Safran 2022\r\nBuild Date 13-SEP-2022\r\n\r\n"
+splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.1\r\n(c)Nathan Safran 2022\r\nBuild Date 5-DEC-2022\r\n\r\n"
 
 loadDefaultMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000"   ;needs the -esc option to treat these as cr and lf
 
@@ -40,8 +40,8 @@ HelpMSG:
     .text "\r\n"
     .text ":B                 | Enter Boot Menu"
     .text "\r\n"
-    ;.text ":H                 | Enter HDD Menu"
-    ;.text "\r\n"
+    .text ":{                 | Enter HDD Menu"
+    .text "\r\n"
     ;.text ":F                 | Enter Floppy Menu"
     ;.text "\r\n"
     .text ":Q                 | Ring Bell"

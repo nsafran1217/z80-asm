@@ -233,7 +233,7 @@ CMD_tbl:
     defw    OUTio_cmd
     defb    "H"
     defw    HELP_cmd
-    defb    "P"
+    defb    "{"
     defw    HDD_cmd
     defb    "F"
     defw    FDD_cmd

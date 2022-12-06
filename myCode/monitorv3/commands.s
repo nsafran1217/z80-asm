@@ -263,6 +263,8 @@ OUTio_cmd:                      ;write value to specified IO port
 
 
 HDD_cmd:
+    JP HDDMenu
+    JP MainPrompt
 FDD_cmd:
     JP MainPrompt
 BOOT_cmd:

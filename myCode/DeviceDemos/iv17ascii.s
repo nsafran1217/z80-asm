@@ -1,37 +1,5 @@
 AsciiTableIV17:
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
-    .data $00,$00,$00
+    .data $00,$00,$00    ;Non printable characters
     .data $02,$00,$0C    ;!
     .data $00,$02,$04    ;"
     .data $00,$8A,$3C    ;#
@@ -116,6 +84,8 @@ AsciiTableIV17:
     .data $00,$80,$40    ;r
     .data $00,$A0,$A1    ;s
     .data $00,$80,$E0    ;t
+    .data $00           ;Not a char. Filling out the table so it cleanly goes to the next page
+
     .data $00,$20,$60    ;u
     .data $00,$40,$40    ;v
     .data $00,$50,$48    ;w
@@ -127,3 +97,102 @@ AsciiTableIV17:
     .data $00,$2A,$21    ;}
     .data $00,$CC,$00    ;~
     .data $00,$00,$00    ;
+
+AsciiIndexIV17:
+    .blk 33, <AsciiTableIV17        ;Non printable ascii characters
+    .byte <AsciiTableIV17+3         ;!
+    .byte <AsciiTableIV17+6         ;"
+    .byte <AsciiTableIV17+9         ;#
+    .byte <AsciiTableIV17+12        ;$
+    .byte <AsciiTableIV17+15        ;%
+    .byte <AsciiTableIV17+18        ;&
+    .byte <AsciiTableIV17+21        ;'
+    .byte <AsciiTableIV17+24        ;(
+    .byte <AsciiTableIV17+27        ;)
+    .byte <AsciiTableIV17+30        ;*
+    .byte <AsciiTableIV17+33        ;+
+    .byte <AsciiTableIV17+36        ;,
+    .byte <AsciiTableIV17+39        ;-
+    .byte <AsciiTableIV17+42        ;.
+    .byte <AsciiTableIV17+45        ;/
+    .byte <AsciiTableIV17+48        ;0
+    .byte <AsciiTableIV17+51        ;1
+    .byte <AsciiTableIV17+54        ;2
+    .byte <AsciiTableIV17+57        ;3
+    .byte <AsciiTableIV17+60        ;4
+    .byte <AsciiTableIV17+63        ;5
+    .byte <AsciiTableIV17+66        ;6
+    .byte <AsciiTableIV17+69        ;7
+    .byte <AsciiTableIV17+72        ;8
+    .byte <AsciiTableIV17+75        ;9
+    .byte <AsciiTableIV17+78        ;:
+    .byte <AsciiTableIV17+81        ;;
+    .byte <AsciiTableIV17+84        ;<
+    .byte <AsciiTableIV17+87        ;=
+    .byte <AsciiTableIV17+90        ;>
+    .byte <AsciiTableIV17+93        ;?
+    .byte <AsciiTableIV17+96        ;@
+    .byte <AsciiTableIV17+99        ;A
+    .byte <AsciiTableIV17+102       ;B
+    .byte <AsciiTableIV17+105       ;C
+    .byte <AsciiTableIV17+108       ;D
+    .byte <AsciiTableIV17+111       ;E
+    .byte <AsciiTableIV17+114       ;F
+    .byte <AsciiTableIV17+117       ;G
+    .byte <AsciiTableIV17+120       ;H
+    .byte <AsciiTableIV17+123       ;I
+    .byte <AsciiTableIV17+126       ;J
+    .byte <AsciiTableIV17+129       ;K
+    .byte <AsciiTableIV17+132       ;L
+    .byte <AsciiTableIV17+135       ;M
+    .byte <AsciiTableIV17+138       ;N
+    .byte <AsciiTableIV17+141       ;O
+    .byte <AsciiTableIV17+144       ;P
+    .byte <AsciiTableIV17+147       ;Q
+    .byte <AsciiTableIV17+150       ;R
+    .byte <AsciiTableIV17+153       ;S
+    .byte <AsciiTableIV17+156       ;T
+    .byte <AsciiTableIV17+159       ;U
+    .byte <AsciiTableIV17+162       ;V
+    .byte <AsciiTableIV17+165       ;W
+    .byte <AsciiTableIV17+168       ;X
+    .byte <AsciiTableIV17+171       ;Y
+    .byte <AsciiTableIV17+174       ;Z
+    .byte <AsciiTableIV17+177       ;[
+    .byte <AsciiTableIV17+180       ;\
+    .byte <AsciiTableIV17+183       ;]
+    .byte <AsciiTableIV17+186       ;^
+    .byte <AsciiTableIV17+189       ;_
+    .byte <AsciiTableIV17+192       ;`
+    .byte <AsciiTableIV17+195       ;a
+    .byte <AsciiTableIV17+198       ;b
+    .byte <AsciiTableIV17+201       ;c
+    .byte <AsciiTableIV17+204       ;d
+    .byte <AsciiTableIV17+207       ;e
+    .byte <AsciiTableIV17+210       ;f
+    .byte <AsciiTableIV17+213       ;g
+    .byte <AsciiTableIV17+216       ;h
+    .byte <AsciiTableIV17+219       ;i
+    .byte <AsciiTableIV17+222       ;j
+    .byte <AsciiTableIV17+225       ;k
+    .byte <AsciiTableIV17+228       ;l
+    .byte <AsciiTableIV17+231       ;m
+    .byte <AsciiTableIV17+234       ;n
+    .byte <AsciiTableIV17+237       ;o
+    .byte <AsciiTableIV17+240       ;p
+    .byte <AsciiTableIV17+243       ;q
+    .byte <AsciiTableIV17+246       ;r
+    .byte <AsciiTableIV17+249       ;s
+    .byte <AsciiTableIV17+252       ;t
+
+    .byte <AsciiTableIV17+0         ;u
+    .byte <AsciiTableIV17+3         ;v
+    .byte <AsciiTableIV17+6         ;w
+    .byte <AsciiTableIV17+9         ;x
+    .byte <AsciiTableIV17+12        ;y
+    .byte <AsciiTableIV17+15        ;z
+    .byte <AsciiTableIV17+18        ;{
+    .byte <AsciiTableIV17+21        ;|
+    .byte <AsciiTableIV17+24        ;}
+    .byte <AsciiTableIV17+27        ;~
+    .byte <AsciiTableIV17+30        ;

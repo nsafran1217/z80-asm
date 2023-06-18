@@ -17,7 +17,7 @@ dinPin      = $01
 strobePin   = $02
 clkPin      = $04
 blnkPin     = $08
-gridBit     = $40
+gridBit     = $40       ;On first byte being shifted
 ;Known addresses
 InputChar   = $0035
 OutputChar  = $003A
@@ -32,13 +32,13 @@ InitPortA:
 TestOut:
     
     LD HL, $5000
-    LD A, $44
+    LD A, $40
     LD (HL), A
     INC HL
-    LD A, $aa
+    LD A, $88
     LD (HL), A
     INC HL
-    LD A, $aa
+    LD A, $CF
     LD (HL), A
 
 
@@ -64,27 +64,28 @@ TestOut:
 
 Shift20Bits:                ;Shift out 20 bits at memory location (HL), MSB order
     LD D, 20                ; number of bits to shift out
-    LD E, 8
+
+    LD E, 4                 ;For first btye, we only want to do the low nybble
+    LD B, (HL)              ;get first byte we are going to shift
+    RL A
+    RL A
+    RL A
+    RL A
 
 Shift20BitsLoop:
-    LD B, (HL)              ;get first byte we are going to shift
+    
     ;LD B,A
 Shift8BitsLoop:
     DEC D
     DEC E
     LD A, B
     PUSH AF                  ;Store what the byte is that we are working on
-    AND %10000000           ;We only want the Most significant bit
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A                    ;Move it over to where Data in is (Bit 0)
+    AND %10000000            ;We only want the Most significant bit
+    RL A                     ;Move it over to where Data in is (Bit 0)
+    RL A
     ;OR 1                    ;TESTING
     OUT (PortAData), A      ;Put out the data so its valid when the clock rises
-    OR clkPin               ;And it with the clk pin bit
+    OR clkPin               ;or it with the clk pin bit
     OUT (PortAData), A      ;Out again with both clock and data
     LD A,0
     OUT (PortAData), A      ;And Out with 0
@@ -103,6 +104,7 @@ Shift8BitsLoop:
     JP NZ, Shift8BitsLoop   ;If not, keep shifting out
     INC HL                  ;Get next byte to shift out
     LD E, 8
+    LD B, (HL)              ;get first byte we are going to shift
     JP Shift20BitsLoop
 
 DoneShifting20:
@@ -111,7 +113,7 @@ DoneShifting20:
 
 
 ;    .include monitor\uart.s
-    .include iv17ascii.s
+ 
    .org $4ffe
 
     .word $0000

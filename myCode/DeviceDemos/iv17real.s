@@ -17,7 +17,7 @@ dinPin      = $01
 strobePin   = $02
 clkPin      = $04
 blnkPin     = $08
-gridBit     = $40
+gridBit     = $04
 ;Known addresses
 InputChar   = $0035
 OutputChar  = $003A
@@ -26,65 +26,79 @@ Start       = $0040
     .org $4000
 
 InitPortA:
-    LD A, $0F               ;This sets the port to mode 0 (output)
+    LD A, $3F               ;This sets the port to mode 3 (control)
+    OUT (PortACMD), A
+    LD A, $00               ;All pins are output
     OUT (PortACMD), A
 
+
+    LD A,"!"
+PrintAllChars:
+    CALL ShiftOutChar
+    INC A
+    CP 81
+    JR C, PrintAllChars
+
+
+
 TestOut:
-    
-    LD HL, $5000
-    LD A, $44
-    LD (HL), A
-    INC HL
-    LD A, $aa
-    LD (HL), A
-    INC HL
-    LD A, $aa
-    LD (HL), A
+    CALL InputChar
+    CALL ShiftOutChar
+    JR TestOut
 
+;Shift out character in A
+;Destroys HL
+ShiftOutChar:
+    PUSH AF
+    PUSH AF
+    LD HL, AsciiIndexIV17   ;Put index table in HL
+    ADD L                   ;Add character to index
+    LD L,A                  ;Put new low byte into HL
+    LD A,(HL)               ;Get low byte address for 3byte code to shift out
+    LD H, >AsciiTableIV17   ;Put High byte of table in H
+    LD L, a                 ;Put indexed byte into low byte
 
-    LD HL, $5000
-    CALL Shift20Bits
-    LD A,'+'
-    CALL OutputChar
-
+    POP AF
+    CP "u"                  ;Check if characteris higher than "u"
+    JP NC, HighAsciiChar    ;Jump if greater than "u"
+    JR StrobeOutTheData
+HighAsciiChar:
+    INC H                   ;Inc to get to next half of ASCII table
+StrobeOutTheData:
+    CALL Shift20Bits        ;Shift out the value in HL
     LD A, strobePin
     OUT (PortAData), A
     LD A, 0
     OUT (PortAData), A
+    POP AF
+    RET
 
-    LD A,'*'
-    CALL OutputChar
-    
-    
-    JP Start
-
-
-
-
-
-Shift20Bits:                ;Shift out 20 bits at memory location (HL), MSB order
+;Shift out 20 bits at memory location (HL), MSB order
+;Destroys HL and AF
+Shift20Bits:                
+    PUSH DE
     LD D, 20                ; number of bits to shift out
-    LD E, 8
 
+    LD E, 4                 ;For first btye, we only want to do the low nybble
+    LD A, (HL)              ;get first byte we are going to shift
+    OR gridBit
+    RLA                        ;Shift it over so the low nybble will be output
+    RLA
+    RLA
+    RLA
+    LD B,A
 Shift20BitsLoop:
-    LD B, (HL)              ;get first byte we are going to shift
+    
     ;LD B,A
 Shift8BitsLoop:
     DEC D
     DEC E
     LD A, B
     PUSH AF                  ;Store what the byte is that we are working on
-    AND %10000000           ;We only want the Most significant bit
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A
-    RR A                    ;Move it over to where Data in is (Bit 0)
-    ;OR 1                    ;TESTING
+    AND %10000000            ;We only want the Most significant bit
+    RLCA                     ;Move it over to where Data in is (Bit 0)   
     OUT (PortAData), A      ;Put out the data so its valid when the clock rises
-    OR clkPin               ;And it with the clk pin bit
+    OR clkPin               ;or it with the clk pin bit
     OUT (PortAData), A      ;Out again with both clock and data
     LD A,0
     OUT (PortAData), A      ;And Out with 0
@@ -92,8 +106,6 @@ Shift8BitsLoop:
     LD A, D                 ;check if we have shifted out 20 bits
     CP 0
     JP Z, DoneShifting20    ;If we did, get out of this
-    LD A,'!'
-    CALL OutputChar
     
     POP AF
     RLCA
@@ -103,15 +115,20 @@ Shift8BitsLoop:
     JP NZ, Shift8BitsLoop   ;If not, keep shifting out
     INC HL                  ;Get next byte to shift out
     LD E, 8
+    LD B, (HL)              ;get first byte we are going to shift
     JP Shift20BitsLoop
 
 DoneShifting20:
     POP AF
+    POP DE
     RET
 
-
+    .include ..\monitorv3\printregs.s
+    .include ..\monitorv3\hexout.s
+    .include ..\monitorv3\String.s
 ;    .include monitor\uart.s
+    .org $4A00
     .include iv17ascii.s
-   .org $4ffe
+    .org $4ffe
 
     .word $0000

@@ -19,6 +19,10 @@ clkPin      = $04
 blnkPin     = $08
 gridBit     = $40
 
+InputChar   = $0035
+OutputChar  = $003A
+Start       = $0040
+
     .org $4000
 
 InitPortA:
@@ -53,7 +57,7 @@ TestOut:
     CALL OutputChar
     
     
-    JP $0036
+    JP Start
 
 
 
@@ -107,7 +111,7 @@ DoneShifting20:
     RET
 
 
-    .include monitor\uart.s
+;    .include monitor\uart.s
 
    .org $4ffe
 

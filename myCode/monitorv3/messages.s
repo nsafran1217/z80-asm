@@ -1,5 +1,5 @@
 
-splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.1\r\n(c)Nathan Safran 2022\r\nBuild Date 5-DEC-2022\r\n\r\n"
+splashScreen: .asciiz "\r\n\r\nZ80 ROM MONITOR v3.1\r\n(c)Nathan Safran 2022\r\nBuild Date 18-JUL-2023\r\n\r\n"
 
 loadDefaultMessage: .asciiz "\r\nSend a program up to 4k Bytes\n\r.org should be $4000. Pad until $5000"   ;needs the -esc option to treat these as cr and lf
 

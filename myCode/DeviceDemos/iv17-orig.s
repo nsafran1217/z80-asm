@@ -18,7 +18,7 @@ strobePin   = $02
 clkPin      = $04
 blnkPin     = $08
 gridBit     = $40
-
+;Known addresses
 InputChar   = $0035
 OutputChar  = $003A
 Start       = $0040
@@ -30,7 +30,6 @@ InitPortA:
     OUT (PortACMD), A
 
 TestOut:
-
     
     LD HL, $5000
     LD A, $44
@@ -112,7 +111,7 @@ DoneShifting20:
 
 
 ;    .include monitor\uart.s
-
+    .include iv17ascii.s
    .org $4ffe
 
     .word $0000

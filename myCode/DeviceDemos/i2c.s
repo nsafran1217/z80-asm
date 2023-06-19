@@ -1,159 +1,17 @@
-;PORTSEL 0
-;PORTSEL 0
-;CONTSEL 1
-;BASE ADDR $5X
-;$50 - PORT A - DATA
-;$51 - PORT B - DATA
-;$52 - PORT A - CMD
-;$53 - PORT B - CMD ;
-
+;General i2c subroutines
+;sclPin and sdaPin are hard coded. Adjustements to code is needed to change.
+;Many subroutines taken from here:
+;https://github.com/Kris-Sekula/CA80/blob/master/RTC/RTC_0x2000_0x2300_v1.4.asm
 
 PortACMD    = $52
 PortAData   = $50
-PortBCMD    = $53
-PortBData   = $51
 
 sclPin      = 7 
 sdaPin      = 6 
 sdaMask = $40
 sclAndsdaOutput = $00
 sclOutAndsdaIn = $40
-RTCAddress = $68
-
-;Known addresses
-InputChar   = $0035
-OutputChar  = $003A
-Start       = $0040
-
-
-   .org $4000
-
-InitPortA:
-    LD A, $cf               ;This sets the port to mode 3 (control)
-    OUT (PortACMD), A
-    LD A, sclAndsdaOutput   ;Set all to output
-    OUT (PortACMD), A
-    ;call WAIT_4
-    ;call WAIT_4
-    ;call WAIT_4
-    ;call WAIT_4
-    ;call WAIT_4
-    ;call WAIT_4
-    ;    call WAIT_4
-    ;call WAIT_4
-    ;call WAIT_4
-
-    JP TestReadTime
-    
-
-TestSetTime:
-
-	;call WAIT_4
-    ;CALL sdaOut
-	call stop_i2c		; initiate bus
-	call WAIT_4
-	;CALL sdaOut
-	call set_addr_W		; Set address counter to 00h
-	CALL sdaOut
-
-    LD A, $20        ;seconds
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $33        ;minutes
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $8        ;hours
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $1         ;Day of week
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $17        ;date
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $12        ;month
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    LD A, $22       ;year
-    CALL putbyte
-    call get_ack
-	CALL sdaOut
-
-    call stop_i2c
-
-
-TestReadTime:
-
-	
-
-	call stop_i2c		; initiate bus
-	call WAIT_4
-	
-	call set_addr_W		; Set address counter to 00h
-
-    call start_i2c
-    ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    set 0,a
-	call putbyte	;
-	call get_ack	;
-
-    ld hl,$8000
-    ;Need to request 7 bytes
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    CALL getbyte
-	LD (HL),A
-	INC HL
-	CALL send_ack
-
-    
-	call send_noack
-	call stop_i2c
-
-    JP Start
-
-
+i2cAddress = $68
 
 WAIT_4:	; delay
 		push	AF
@@ -170,48 +28,50 @@ W40:	djnz W40
 		pop	AF
 		ret
 
-set_addr_W:
-					; Reset device address counter to 00h, for i2c device on address D0
+;Setup i2c device for a write and set address to $00
+set_addr_W:					
 	call start_i2c
-	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    res 0,a
+	ld a,i2cAddress		; Write i2c address
+    RLA                 ;Shift address left
+    res 0,a             ;Make sure R/W bit is 0 for a write
 	JP set_addr
+
+;Setup i2c device for a read and set address to $00
 set_addr_R:
-					; Reset device address counter to 00h, for i2c device on address D0
 	call start_i2c
-	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    set 0,a
-	
+	ld a,i2cAddress		
+    RLA                 ;Shift address left
+    set 0,a             ;Set R/W bit for read
+
+;Finish the set_addr_r/w routine	
 set_addr:
-	
 	call putbyte	;
 	call get_ack	;
 
 	CALL sdaOut
 	
-	ld a,00h	; read from address 00h
+	ld a,00h	        ; Set address to $00
 	call putbyte
 	call get_ack	
 
 	CALL sdaOut
 	RET
 
+
 get_ack:	; Get ACK from i2c slave
     CALL sdaIn
 	call sclset			; raised CLK, now expect "low" on SDA as the sign on ACK	
-	ld A,(PortAData)	 	; here read SDA and look for "LOW" = ACK, "HI" - NOACK or Timeout`
+	ld A,(PortAData)	; here read SDA and look for "LOW" = ACK, "HI" - NOACK or Timeout`
     ;CALL PrintRegs
     CALL sclclr         ;;IGNORE everything I wrote and bail
-    ret                 ;;
+    ret                 ;;TO DO, Fix
     
     LD B, $FF
     BIT sdaPin,a
     JP Z, NACK
 
-    LD A, "#"
-    CALL OutputChar
+    ;LD A, "#"
+    ;CALL OutputChar
 	ret
 	; ToDo - implement the ACK timeout, right now we blindly assume the ACK came in. (Implemented???)
 NACK:
@@ -220,14 +80,14 @@ NACK:
     BIT sdaPin,a
     JP NZ, ACK
     djnz NACK
-    LD A, "!"
-    CALL OutputChar
+    ;LD A, "!"
+    ;CALL OutputChar
     
 ACK:
     call sclclr
     ret
 
-
+; Send ACK to i2c bus
 send_ack: 
     CALL sdaOut	;
     LD A,0
@@ -235,7 +95,6 @@ send_ack:
     CALL sdaput
 	call sclset		; Clock SCL
 	call sclclr
-
 	ret
 
 send_noack:		; Send NAK (no ACK) to i2c bus (master keeps SDA HI on the 9th bit of data)
@@ -246,27 +105,26 @@ send_noack:		; Send NAK (no ACK) to i2c bus (master keeps SDA HI on the 9th bit 
 	ret
 	
 
-
-getbyte:	; Read 8 bits from i2c bus
+; Read 8 bits from i2c bus. Place into A
+getbyte:	
         push bc
 		CALL sdaIn 		;
 		ld b,8
 gb1:    call    sclset          ; Clock UP
-		in A,(PortAData)			; SDA (RX data bit) is in Bit 6
-		rlca					; move RX data bit to CY
+		in A,(PortAData)		; SDA (RX data bit) is in Bit 6
+		rlca					; move RX data bit to carry
         rlca
                 
 		rl      c              	; Shift CY into C
         call    sclclr          ; Clock DOWN
         djnz    gb1
         ld a,c             		; Return RX Byte in A
-        ;CALL PrintRegs
 		pop bc
  
         ret
 
-
-putbyte: 	; Send byte from A to i2C bus
+; Send byte from A to i2C bus
+putbyte: 	
         push    bc
         ld      c,a             ;Shift register
         ld      b,8
@@ -309,13 +167,14 @@ start_i2c:          ; i2c START sequence, SDA goes LO while SCL is HI
 			call    sdaset
 			ret
 
-
+;Set sda pin on port A to IN
 sdaIn:
     LD A, $cf               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
     LD A,sclOutAndsdaIn		;Set the bit mask for the pins
 	OUT (PortACMD),A
     RET
+;Set sda pin on port A to OUT
 sdaOut:
     LD A, $cf               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
@@ -346,12 +205,3 @@ sdaclr: ; SDA LO without changing SCL
         res     sdaPin,a
         out     (PortAData),a
         ret
-
-
-    .include ..\monitorv3\printregs.s
-    .include ..\monitorv3\hexout.s
-    .include ..\monitorv3\String.s
-
-    .org $4ffe
-
-    .word $0000

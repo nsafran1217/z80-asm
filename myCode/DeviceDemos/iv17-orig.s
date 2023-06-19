@@ -20,7 +20,7 @@ blnkPin     = $08
 gridBit     = $40       ;On first byte being shifted
 ;Known addresses
 InputChar   = $0035
-OutputChar  = $003A
+OutputChar  = $0038
 Start       = $0040
 
     .org $4000

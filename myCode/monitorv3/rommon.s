@@ -7,16 +7,14 @@ STACKADDR = $ffff
     JP Start
     .org $0030
 Disk_read_jump:                     ;this is a patch until I change and write a new version of diskcpmloader.s to the HDD 
-        CALL disk_read            ;Known address of $0030 for the disk read subroutine
-        ret
+        JP disk_read            ;Known address of $0030 for the disk read subroutine
+
     .org $0035
-InputChar_bios:
-        CALL InputChar            ;Known address of $0035 for the inputchar uart subroutine
-        ret
-    .org $003A
-OutputChar_bios:
-        CALL OutputChar            ;Known address of $003A for the outputchar uart subroutine
-        ret
+BiosCalls: ;Known addresses for common bios routines
+        JP InputChar            ;$0035
+        JP OutputChar           ;$0038
+        JP PrintStr             ;$003B
+
 
     .org $0040                      ;Known address for start
 

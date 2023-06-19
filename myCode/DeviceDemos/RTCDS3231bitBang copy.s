@@ -29,41 +29,54 @@ Start       = $0040
    .org $4000
 
 InitPortA:
-    LD A, $cf               ;This sets the port to mode 3 (control)
+    LD A, $3F               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
     LD A, sclAndsdaOutput   ;Set all to output
     OUT (PortACMD), A
-    call WAIT_4
-    call WAIT_4
-    call WAIT_4
-    call WAIT_4
-    call WAIT_4
-    call WAIT_4
 
-    ;JP TestReadTime
+
+
     
 
 TestSetTime:
 
-	;call WAIT_4
-    ;CALL sdaOut
+
 	call stop_i2c		; initiate bus
-	;call WAIT_4
-	;CALL sdaOut
-	call set_addr_W		; Set address counter to 00h
+	call WAIT_4
+	
+	call start_i2c
+	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
+    ;RLCA
+    ;res 0,A
+
+    
+	call putbyte	;
+	call get_ack	;
+	
+	CALL sdaOut
+	
+	ld a,00h	; read from address 00h
+	call putbyte
+	call get_ack	
+
 	CALL sdaOut
 
-    LD A, 20        ;seconds
+    ;LD A,0
+    ;CALL putbyte
+    ;call get_ack
+	CALL sdaOut
+
+    LD A, 12        ;seconds
     CALL putbyte
     call get_ack
 	CALL sdaOut
 
-    LD A, 33        ;minutes
+    LD A, 12        ;minutes
     CALL putbyte
     call get_ack
 	CALL sdaOut
 
-    LD A, 8        ;hours
+    LD A, 12        ;hours
     CALL putbyte
     call get_ack
 	CALL sdaOut
@@ -73,7 +86,7 @@ TestSetTime:
     call get_ack
 	CALL sdaOut
 
-    LD A, 17        ;date
+    LD A, 12        ;date
     CALL putbyte
     call get_ack
 	CALL sdaOut
@@ -83,7 +96,7 @@ TestSetTime:
     call get_ack
 	CALL sdaOut
 
-    LD A, 22       ;year
+    LD A, 12        ;year
     CALL putbyte
     call get_ack
 	CALL sdaOut
@@ -93,21 +106,35 @@ TestSetTime:
 
 TestReadTime:
 
-	
-
+	ld hl,$8000
 	call stop_i2c		; initiate bus
 	call WAIT_4
 	
-	call set_addr_W		; Set address counter to 00h
-
-    call start_i2c
-    ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    set 0,a
+	call start_i2c
+	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
+    ;RLCA
+    ;set 0,A
+    
+    
 	call putbyte	;
 	call get_ack	;
+	
+	CALL sdaOut
+	
+	ld a,00h	; read from address 00h
+	call putbyte
+	call get_ack	
 
-    ld hl,$8000
+	CALL sdaOut
+    ;JP TestReadTime
+
+    ;LD A,0
+    ;CALL putbyte
+    ;call get_ack
+	;CALL sdaIn
+    ;CALL sdaOut
+    ;call start_i2c
+
     ;Need to request 7 bytes
     CALL getbyte
 	LD (HL),A
@@ -160,7 +187,7 @@ GETTIME: ; Synch CA80 time with RTC
 	call stop_i2c		; initiate bus
 	call WAIT_4
 	
-	;call set_addr		; Set address counter to 00h
+	call set_addr		; Set address counter to 00h
 	call start_i2c
 	ld a,$D1			; Read current address A1 for EEPROM D0 for RTC
 	call putbyte		
@@ -211,7 +238,7 @@ SAVETIME:	; save current software RTC to HW RTC procedure, call by: *E[G][2100]=
 	
 	call stop_i2c			; initiate bus
 
-	;call set_addr
+	call set_addr
 	ld a,(hl)			; save seconds to EEPROM under address 00
 	call putbyte
 	call get_ack
@@ -277,12 +304,11 @@ W40:	djnz W40
 		pop	AF
 		ret
 
-set_addr_W:
+set_addr:
 					; Reset device address counter to 00h, for i2c device on address D0
 	call start_i2c
 	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    res 0,a
+    
 	call putbyte	;
 	call get_ack	;
 	
@@ -295,38 +321,16 @@ set_addr_W:
 	CALL sdaOut
 	
 	ret
-
-set_addr_R:
-					; Reset device address counter to 00h, for i2c device on address D0
-	call start_i2c
-	ld a,RTCAddress		; Write Command A0 for EEPROM D0 for RTC
-    RLA
-    set 0,a
-	call putbyte	;
-	call get_ack	;
-
-	CALL sdaOut
-	
-	ld a,00h	; read from address 00h
-	call putbyte
-	call get_ack	
-
-	CALL sdaOut
-	
-	ret
-
 
 get_ack:	; Get ACK from i2c slave
     CALL sdaIn
 	call sclset			; raised CLK, now expect "low" on SDA as the sign on ACK	
 	ld A,(PortAData)	 	; here read SDA and look for "LOW" = ACK, "HI" - NOACK or Timeout`
+    CALL PrintRegs
+    AND sdaMask
     ;CALL PrintRegs
-    CALL sclclr         ;;IGNORE everything I wrote and bail
-    ret                 ;;
-    
     LD B, $FF
-    BIT sdaPin,a
-    JR Z, NACK
+    JR NZ, NACK
 
     LD A, "#"
     CALL OutputChar
@@ -335,8 +339,8 @@ get_ack:	; Get ACK from i2c slave
 NACK:
     
 	ld A,(PortAData)	 	; here read SDA and look for "LOW" = ACK, "HI" - NOACK or Timeout`
-    BIT sdaPin,a
-    JR NZ, ACK
+    AND sdaMask
+    JR Z, ACK
     djnz NACK
     LD A, "!"
     CALL OutputChar
@@ -348,12 +352,8 @@ ACK:
 
 send_ack: 
     CALL sdaOut	;
-    LD A,0
-    RRCA
-    CALL sdaput
 	call sclset		; Clock SCL
 	call sclclr
-
 	ret
 
 send_noack:		; Send NAK (no ACK) to i2c bus (master keeps SDA HI on the 9th bit of data)
@@ -370,17 +370,14 @@ getbyte:	; Read 8 bits from i2c bus
 		CALL sdaIn 		;
 		ld b,8
 gb1:    call    sclset          ; Clock UP
-		in A,(PortAData)			; SDA (RX data bit) is in Bit 6
-		rlca					; move RX data bit to CY
-        rlca
-                
+		in A,(PortAData)			; SDA (RX data bit) is in A.0
+		rrca					; move RX data bit to CY
 		rl      c              	; Shift CY into C
         call    sclclr          ; Clock DOWN
         djnz    gb1
         ld a,c             		; Return RX Byte in A
-        ;CALL PrintRegs
 		pop bc
- 
+        CALL PrintRegs
         ret
 
 
@@ -401,7 +398,6 @@ sclclk:         ;	"Clock" the SCL line Hi -> Lo
 			call    sclset
 			call    sclclr
 			ret
-
 
 sdaput:        ; CY state copied to SDA line, without changing SCL state
         in      a,(PortAData)       ;read in Port
@@ -429,13 +425,13 @@ start_i2c:          ; i2c START sequence, SDA goes LO while SCL is HI
 
 
 sdaIn:
-    LD A, $cf               ;This sets the port to mode 3 (control)
+    LD A, $3F               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
     LD A,sclOutAndsdaIn
 	OUT (PortACMD),A
     RET
 sdaOut:
-    LD A, $cf               ;This sets the port to mode 3 (control)
+    LD A, $3F               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
     LD A,sclAndsdaOutput 		
 	OUT (PortACMD),A

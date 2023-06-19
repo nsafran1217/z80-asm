@@ -26,7 +26,7 @@ Start       = $0040
     .org $4000
 
 InitPortA:
-    LD A, $3F               ;This sets the port to mode 3 (control)
+    LD A, $CF               ;This sets the port to mode 3 (control)
     OUT (PortACMD), A
     LD A, $00               ;All pins are output
     OUT (PortACMD), A

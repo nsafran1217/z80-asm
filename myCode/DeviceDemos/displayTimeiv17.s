@@ -12,12 +12,12 @@ RTCAddress  = $68
 
     .org $4000
 
-Prompt:
-    CALL sdaOut
+Setup:
+    CALL sdaOut         ;Note that this sets all pins to out
+                        ;This sets us up for the IV17 as well
 
-
-SetTime:
-    LD HL, $8100        ;memory location to dump
+ReadTime:
+    LD HL, TimeBuffer   ;memory location to dump to
 
 	call stop_i2c		; initiate bus
 	call WAIT_4
@@ -27,10 +27,9 @@ SetTime:
     call start_i2c      ;Repeated start
     ld a,RTCAddress		; Start the read command without sending an address
     RLA
-    set 0,a
-	call putbyte	;
-	call get_ack	;
-
+    set 0,a             ;Set R/w bit to Read
+	call putbyte
+	call get_ack
 
     LD B, 7
 read_time_loop:
@@ -41,12 +40,19 @@ read_time_loop:
     djnz read_time_loop
 
     call stop_i2c
-
     JP Start
 
 
-    .include i2c.s
 
+
+
+
+
+
+
+    .include i2c.s
+    
+TimeBuffer: .blk 7
     ;Padding
     .org $4ffe
 

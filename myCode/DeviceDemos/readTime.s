@@ -16,7 +16,7 @@ Prompt:
     CALL sdaOut
 
 
-SetTime:
+ReadTime:
     LD HL, $8100        ;memory location to dump
 
 	call stop_i2c		; initiate bus

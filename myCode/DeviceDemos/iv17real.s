@@ -123,9 +123,6 @@ DoneShifting20:
     POP DE
     RET
 
-    .include ..\monitorv3\printregs.s
-    .include ..\monitorv3\hexout.s
-    .include ..\monitorv3\String.s
 ;    .include monitor\uart.s
     .org $4A00
     .include iv17ascii.s

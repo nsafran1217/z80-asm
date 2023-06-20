@@ -3,6 +3,8 @@
 ;SS MM HH w DD mm yy 
 ;HH is special becuase this sets 24 or 12 hour and AM or PM
 ;See data sheet
+PortACMD    = $52
+PortAData   = $50
 
 InputChar   = $0035
 OutputChar  = $0038
@@ -28,9 +30,8 @@ ReadTime:
     ld a,RTCAddress		; Start the read command without sending an address
     RLA
     set 0,a
-	call putbyte	;
-	call get_ack	;
-
+	call putbyte
+	call get_ack
 
     LD B, 7
 read_time_loop:

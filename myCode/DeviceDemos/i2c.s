@@ -3,8 +3,7 @@
 ;Many subroutines taken from here:
 ;https://github.com/Kris-Sekula/CA80/blob/master/RTC/RTC_0x2000_0x2300_v1.4.asm
 
-PortACMD    = $52
-PortAData   = $50
+
 
 sclPin      = 7 
 sdaPin      = 6 

@@ -4,6 +4,9 @@
 ;HH is special becuase this sets 24 or 12 hour and AM or PM
 ;See data sheet
 
+PortACMD    = $52
+PortAData   = $50
+
 InputChar   = $0035
 OutputChar  = $0038
 PrintStr    = $003B

@@ -17,16 +17,13 @@ RTCAddress  = $68
 Setup:
     CALL sdaOut         ;Note that this sets all pins to out
                         ;This sets us up for the IV17 as well
-    LD A, 0
-    OUT (PortAData), A
 
 ReadTime:
     LD HL, TimeBufferVar   ;memory location to dump to
 
 	call stop_i2c		; initiate bus
-	;call WAIT_4
 	
-	call set_addr_W		; Set address counter to 00h
+	call set_addr_W		; Set address to $00, ready for write
 
     call start_i2c      ;Repeated start
     ld a,RTCAddress		; Start the read command without sending an address
@@ -86,19 +83,19 @@ DisplayTime:
     CALL ShiftOutChar
     CALL ShiftOutChar
 DisplayTimeLoop: 
-    LD A, (HL)
-    AND %00001111
+    LD A, (HL)          ;Load value from memory
+    AND %00001111       ;get low nybble
+    ADD "0"             ;Convert to ascii
+    CALL ShiftOutChar   
+    LD A, (HL)          ;Get A back
+    AND %11110000       ;Get high nybble
+    RRCA
+    RRCA
+    RRCA
+    RRCA                ;Move nybble over
     ADD "0"
     CALL ShiftOutChar
-    LD A, (HL)
-    AND %11110000
-    RRCA
-    RRCA
-    RRCA
-    RRCA
-    ADD "0"
-    CALL ShiftOutChar
-    INC HL
+    INC HL              ;Next
     djnz DisplayTimeLoop
     CALL Strobe
 
@@ -111,7 +108,7 @@ DisplayTimeLoop:
     .include i2c.s
     .include iv17.s
 
-TimeBufferVar: blk 8
+TimeBufferVar: blk 8    ;Variable for time to be read into
 
     .org $4A00
     .include iv17ascii.s

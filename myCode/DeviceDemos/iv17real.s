@@ -30,7 +30,7 @@ TestOut:
 
     .include iv17.s
     .org $4A00
-    .include iv17ascii.s
+    .include iv17asciitable.s
     .org $4ffe
 
     .word $0000

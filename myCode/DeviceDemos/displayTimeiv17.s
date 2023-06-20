@@ -111,7 +111,7 @@ DisplayTimeLoop:
 TimeBufferVar: blk 8    ;Variable for time to be read into
 
     .org $4A00
-    .include iv17ascii.s
+    .include iv17asciitable.s
 
     ;Padding
     .org $4ffe

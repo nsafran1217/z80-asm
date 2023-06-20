@@ -1,4 +1,5 @@
-
+PortACMD    = $52
+PortAData   = $50
 
 ;Known addresses
 InputChar   = $0035
@@ -13,6 +14,7 @@ Start       = $0040
     LD A,"!"
 PrintAllChars:
     CALL ShiftOutChar
+    CALL Strobe
     INC A
     CP 81
     JR C, PrintAllChars
@@ -22,6 +24,7 @@ PrintAllChars:
 TestOut:
     CALL InputChar
     CALL ShiftOutChar
+    CALL Strobe
     JR TestOut
 
 

@@ -8,8 +8,7 @@
 ;$53 - PORT B - CMD ;
 ;BLNK CLK STROBE DIN
 
-PortACMD    = $52
-PortAData   = $50
+
 
 
 dinPin      = $01
@@ -42,11 +41,16 @@ ShiftOutChar:
     POP AF
     CP "u"                  ;Check if characteris higher than "u"
     JP NC, HighAsciiChar    ;Jump if greater than "u"
-    JR StrobeOutTheData
+    JP ShiftOutTheData
 HighAsciiChar:
     INC H                   ;Inc to get to next half of ASCII table
-StrobeOutTheData:
+ShiftOutTheData:
     CALL Shift20Bits        ;Shift out the value in HL
+    POP AF
+    RET
+
+Strobe:                     ;Strobe so data is latched
+    PUSH AF
     LD A, strobePin
     OUT (PortAData), A
     LD A, 0
@@ -58,6 +62,7 @@ StrobeOutTheData:
 ;Destroys HL and AF
 Shift20Bits:                
     PUSH DE
+    PUSH BC
     LD D, 20                ; number of bits to shift out
 
     LD E, 4                 ;For first btye, we only want to do the low nybble
@@ -101,5 +106,6 @@ Shift8BitsLoop:
 
 DoneShifting20:
     POP AF
+    POP BC
     POP DE
     RET

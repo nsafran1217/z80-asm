@@ -27,8 +27,8 @@ InitPortA:
 
 
 ;Shift out character in A
-;Destroys HL
 ShiftOutChar:
+    PUSH HL
     PUSH AF
     PUSH AF
     LD HL, AsciiIndexIV17   ;Put index table in HL
@@ -41,12 +41,13 @@ ShiftOutChar:
     POP AF
     CP "u"                  ;Check if characteris higher than "u"
     JP NC, HighAsciiChar    ;Jump if greater than "u"
-    JP ShiftOutTheData
+    DEC H                   ;Just dec it. Faster than jumping over the INC
 HighAsciiChar:
     INC H                   ;Inc to get to next half of ASCII table
 ShiftOutTheData:
     CALL Shift20Bits        ;Shift out the value in HL
     POP AF
+    POP HL
     RET
 
 Strobe:                     ;Strobe so data is latched
@@ -65,47 +66,38 @@ Shift20Bits:
     PUSH BC
     LD D, 20                ; number of bits to shift out
 
-    LD E, 4                 ;For first btye, we only want to do the low nybble
+    LD B, 4                 ;For first btye, we only want to do the low nybble
     LD A, (HL)              ;get first byte we are going to shift
-    OR gridBit
-    RLA                        ;Shift it over so the low nybble will be output
+    OR gridBit              ;Grid will always be on. Shouldnt matter
+    RLA                     ;Shift it over so the low nybble will be output
     RLA
     RLA
     RLA
-    LD B,A
-Shift20BitsLoop:
+    LD E,A                  ;Store it in E. Value will always be in E
+
+ShiftBitsLoop:
+    DEC D                   ;Dec out number of bits to shift
+
+    RLC E                   ;Move it over to where Data in is (Bit 0)
+    LD A, E                 ;Byte will be untouched in E
     
-    ;LD B,A
-Shift8BitsLoop:
-    DEC D
-    DEC E
-    LD A, B
-    PUSH AF                  ;Store what the byte is that we are working on
-    AND %10000000            ;We only want the Most significant bit
-    RLCA                     ;Move it over to where Data in is (Bit 0)   
+    AND %00000001            ;We only want the Most significant bit
     OUT (PortAData), A      ;Put out the data so its valid when the clock rises
     OR clkPin               ;or it with the clk pin bit
     OUT (PortAData), A      ;Out again with both clock and data
     LD A,0
     OUT (PortAData), A      ;And Out with 0
-
-    LD A, D                 ;check if we have shifted out 20 bits
-    CP 0
+         
+    CP D                     ;check if we have shifted out 20 bits (A has 0 so we can do this)
     JP Z, DoneShifting20    ;If we did, get out of this
-    
-    POP AF
-    RLCA
-    LD B,A
-    LD A,E                  ;get counter of bits
-    CP 0                    ;if its not empty keep loooping
-    JP NZ, Shift8BitsLoop   ;If not, keep shifting out
+
+    DJNZ ShiftBitsLoop   ;If not, keep shifting out
     INC HL                  ;Get next byte to shift out
-    LD E, 8
-    LD B, (HL)              ;get first byte we are going to shift
-    JP Shift20BitsLoop
+    LD B, 8
+    LD E, (HL)              ;get first byte we are going to shift
+    JP ShiftBitsLoop
 
 DoneShifting20:
-    POP AF
     POP BC
     POP DE
     RET

@@ -6,11 +6,21 @@
 
 InputChar   = $0035
 OutputChar  = $0038
-PrintString = $003B
+PrintStr    = $003B
 Start       = $0040
 
+    .org $4000
 
-TestSetTime:
+Prompt:
+    CALL sdaOut
+    LD IY, message
+    CALL PrintStr
+    CALL InputChar
+    CP "Y"
+    JP Z, SetTime
+    JP Start
+
+SetTime:
     LD HL, $8000        ;memory location of time paramaters
     CALL sdaOut
 
@@ -23,9 +33,8 @@ TestSetTime:
 	CALL sdaOut
 
 
-
-write_time_loop:
     LD B, 7
+write_time_loop:
     LD A, (HL)       ;year
     CALL putbyte
     call get_ack
@@ -33,12 +42,21 @@ write_time_loop:
     INC HL
     djnz write_time_loop
 
-
-
     call stop_i2c
+
+    JP Start
+
 
     .include i2c.s
 
-message: .asciiz "This will set the time to the value stored in $8000 in BCD format. SS MM HH w DD mm yy \n\r
-See manual of DS3231 for special paramaters to provide\n\r
-Y to continue, any other to exit:"
+ message:    
+    .text "\r\n"
+    .text "This will set the time to the value stored in $8000 in BCD format. SS MM HH w DD mm yy"
+    .text "\r\n"
+    .text "See manual of DS3231 for special paramaters to provide\r\nY to continue, any other to exit: "
+    .data 0
+
+    ;Padding
+    .org $4ffe
+
+    .word $0000

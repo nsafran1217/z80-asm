@@ -14,7 +14,7 @@ Start       = $0040
     LD A,"!"
 PrintAllChars:
     CALL ShiftOutChar
-    CALL Strobe
+    CALL StrobeDisplay
     INC A
     CP 81
     JR C, PrintAllChars
@@ -24,7 +24,7 @@ PrintAllChars:
 TestOut:
     CALL InputChar
     CALL ShiftOutChar
-    CALL Strobe
+    CALL StrobeDisplay
     JR TestOut
 
 

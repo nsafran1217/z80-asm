@@ -50,7 +50,7 @@ ShiftOutTheData:
     POP HL
     RET
 
-Strobe:                     ;Strobe so data is latched
+StrobeDisplay:                     ;Strobe so data is latched
     PUSH AF
     LD A, strobePin
     OUT (PortAData), A

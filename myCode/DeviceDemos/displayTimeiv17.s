@@ -107,7 +107,7 @@ SkipNoColon:
     CALL ShiftOutChar
     INC HL              ;Next
     djnz DisplayTimeLoop
-    CALL Strobe
+    CALL StrobeDisplay
 
     JP ReadTime
     JP Start

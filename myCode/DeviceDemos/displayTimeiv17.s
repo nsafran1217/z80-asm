@@ -79,11 +79,21 @@ ReadTime:
 DisplayTime:
     LD HL, TimeBufferVar
     LD B, 3         ;Only do time
-    LD A, 0
-    CALL ShiftOutChar
-    CALL ShiftOutChar
+    LD E, (HL)
+    ;LD A, 0
+    ;CALL ShiftOutChar
+    ;CALL ShiftOutChar
 DisplayTimeLoop: 
-    LD A, (HL)          ;Load value from memory
+    LD A, (TimeBufferVar)         ;Load value from memory
+    RRCA             ;Check if even
+    JP C, NoColon
+    LD A, ":"   
+    JP SkipNoColon:
+NoColon:
+    LD A, 0
+SkipNoColon:
+    CALL ShiftOutChar
+    LD A, (HL)
     AND %00001111       ;get low nybble
     ADD "0"             ;Convert to ascii
     CALL ShiftOutChar   

@@ -17,7 +17,9 @@ Start       = $0040
 
     CALL InitPortA
     LD HL, TestMessage
-    CALL BlankDisplay
+    CALL ShiftOutStringNULTerm
+    CALL WAIT_4
+    LD HL, TestMessage
     CALL ScrollOutString
     JP Start
 
@@ -53,6 +55,7 @@ ScrollOutString:
     LD A, 0
 AddBlanksToStringStart:
     LD (HL), A
+    INC HL
     DJNZ AddBlanksToStringStart
     PUSH HL                     ;Move HL into DE and bring HL back to original value
     POP DE                      ;DE is pointing to our string buffer ready to take characters
@@ -65,16 +68,18 @@ CopyStringToBuffer:
     ;Once we hit the NUL, we need to add NumOfTubes more NULs
     PUSH DE
     POP HL                      ;Get DE into HL. We're done with the orignial string pointer
-    LD B, NumOfVFDTubes
+    LD B, NumOfVFDTubes-1
     LD A, 0
 AddBlanksToStringEnd:
     LD (HL), A
+    INC HL
     DJNZ AddBlanksToStringEnd
     ;At this point, memory is setup, but we kinda need to know how long the string is. 
     ;plus how many NULs are at the start and end
     ;So we could just go until we hit NumOfTubes NUL in a row
     ;Lets try that first
-    LD B,  NumOfVFDTubes*2      ;Number of NULs that should be at the start and end
+    LD B,  NumOfVFDTubes+1      ;Number of NULs that should be at the start and end
+                                ;Because HL is only pointing at a NUL once at the end and NumOfTubes at the start
     LD HL, ScrollMessageBuffer
 ScrollStringWindowLoop:         ;We need a loop where we INC HL and display that string 
     CALL WAIT_4
@@ -85,13 +90,8 @@ ScrollStringWindowLoop:         ;We need a loop where we INC HL and display that
     INC HL                      ;Move window right
     JP ScrollStringWindowLoop
 DecCounterOfNULs:
-    DEC B
-    LD A, B
-    CP 0
-    JP Z, DoneScrolling
     INC HL
-    JP ScrollStringWindowLoop
-DoneScrolling:
+    DJNZ ScrollStringWindowLoop
 
     POP DE
     POP BC
@@ -124,7 +124,6 @@ ShiftOutStringTubeLenLoop2:
 
 
 ;Shift out NULL terminatedstring pointed to by HL
-;Destroys HL (Maybe, see if we can easily bring it back with a DEC)
 ShiftOutStringNULTerm:
     PUSH AF
     PUSH BC
@@ -169,6 +168,7 @@ W40:	djnz W40
 		ret
 
 TestMessage: .asciiz "Test Long String"
+    .org $4900
 ScrollMessageBuffer: .blk NumOfVFDTubes+64      ;Variable to store string. we will add blank characters to it
 
     .include iv17.s

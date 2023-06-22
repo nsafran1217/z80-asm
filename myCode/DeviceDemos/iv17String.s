@@ -1,29 +1,13 @@
 ;Subroutines to print out strings to the iv17 display
 ;Scrolling, static printing, etc
 
-PortACMD    = $52
-PortAData   = $50
-NumOfVFDTubes = 8
-
-InputChar   = $0035
-OutputChar  = $0038
-PrintStr    = $003B
-Start       = $0040
 
 
 
 
-    .org $4000
-
-    CALL InitPortA
-    LD HL, TestMessage
-    CALL ShiftOutStringNULTerm
-    CALL WAIT_4
-    LD HL, TestMessage
-    CALL ScrollOutString
-    JP Start
 
 
+;Blank the display
 BlankDisplay:
     PUSH BC
     PUSH AF
@@ -167,14 +151,4 @@ W40:	djnz W40
 		pop	AF
 		ret
 
-TestMessage: .asciiz "Test Long String"
-    .org $4900
 ScrollMessageBuffer: .blk NumOfVFDTubes+64      ;Variable to store string. we will add blank characters to it
-
-    .include iv17.s
-    .org $4A00
-    .include iv17asciitable.s
-
-    ;Padding
-    .org $4ffe
-    .word $0000

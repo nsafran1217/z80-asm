@@ -1,12 +1,7 @@
 ;Subroutines to print out strings to the iv17 display
 ;Scrolling, static printing, etc
-
-
-
-
-
-
-
+;NumOfVFDTubes and ScrollSpeed must be provided
+;
 ;Blank the display
 BlankDisplay:
     PUSH BC
@@ -66,7 +61,8 @@ AddBlanksToStringEnd:
                                 ;Because HL is only pointing at a NUL once at the end and NumOfTubes at the start
     LD HL, ScrollMessageBuffer
 ScrollStringWindowLoop:         ;We need a loop where we INC HL and display that string 
-    CALL WAIT_4
+    LD DE, ScrollSpeed
+    CALL WaitLoop
     CALL ShiftOutStringTubeLen
     LD A, (HL)
     CP 0                        ;Is it a NUL at the string we just shifted?
@@ -136,19 +132,30 @@ ShiftOutStringNULLoop:
     POP AF
     RET
 
-WAIT_4:	; delay
-		push	AF
-		push	BC
-		push	DE
-		ld	de,0400h
-W40:	djnz W40
-		dec de
-		ld a,d
-		or a
-		jp	nz,W40
-		pop	DE
-		pop	BC
-		pop	AF
-		ret
+
+
+
+;Wait loop from https://www.paleotechnologist.net/?p=2589
+;Provide number of times to do loop in DE
+;1 inner loop is about 6ms
+WaitLoop:
+   	push	AF
+	push	BC
+Outer:
+    LD BC, 1000h            ;Loads BC with hex 1000
+Inner:
+    DEC BC                  ;Decrements BC
+    LD A, B                 ;Copies D into A
+    OR C                    ;Bitwise OR of E with A (now, A = D | E)
+    JP NZ, Inner            ;Jumps back to Inner: label if A is not zero
+    DEC DE                  ;Decrements DE
+    LD A, D                 ;Copies B into A
+    OR E                    ;Bitwise OR of C with A (now, A = B | C)
+    JP NZ, Outer            ;Jumps back to Outer: label if A is not zero
+
+	pop	BC
+	pop	AF
+	ret
+
 
 ScrollMessageBuffer: .blk NumOfVFDTubes+64      ;Variable to store string. we will add blank characters to it

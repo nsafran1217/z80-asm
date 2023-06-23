@@ -40,7 +40,7 @@ Check_Next_Param_Coming:    ;Check if value in HL is a space or a NUL, if not, e
     LD A, (HL)              ;If this is a space we know a value is coming
     CP " "
     RET Z                   ;Return if its a space
-    LD A, (HL)
+    LD A, (HL)  ;;Is this needed??
     CP $01                  ;Check if its NUL be CP 1, this will set Carry flag
     RET C
     JP InvalidCMD           ;Else, print error message

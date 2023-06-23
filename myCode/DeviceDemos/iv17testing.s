@@ -17,9 +17,7 @@ Start       = $0040
 
     LD HL, TestMessage
     CALL ScrollOutString
-    JP Start
 
-    
 
 
 
@@ -32,7 +30,7 @@ PrintAllChars:
     CP 126
     JR C, PrintAllChars
 
-TestOut:
+Test:
 
     CALL WAIT_4
     LD HL, TestMessage
@@ -40,10 +38,10 @@ TestOut:
     CALL WAIT_4
     LD HL, TestMessage
     CALL ScrollOutString
-    JP Start
+    ;JP Start
 
     
-
+TestOut:
     CALL InputChar
     CALL ShiftOutChar
     CALL StrobeDisplay
